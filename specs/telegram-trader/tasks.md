@@ -3046,12 +3046,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 72: Create Makefile with common commands
 
 **Do:**
-- [ ] Create `Makefile` at project root
-- [ ] Add targets: build, test, lint, run, docker-up, docker-down
-- [ ] Add target: proto-gen (regenerate protobuf code)
-- [ ] Add target: migrate (run database migrations)
-- [ ] Add target: clean (remove build artifacts)
-- [ ] Add help target that lists all commands
+- [x] Create `Makefile` at project root
+- [x] Add targets: build, test, lint, run, docker-up, docker-down
+- [x] Add target: proto-gen (regenerate protobuf code)
+- [x] Add target: migrate (run database migrations)
+- [x] Add target: clean (remove build artifacts)
+- [x] Add help target that lists all commands
 
 **Files:**
 - `Makefile` - create with all common commands
