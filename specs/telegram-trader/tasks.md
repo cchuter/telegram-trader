@@ -609,11 +609,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 15: Implement basic swap simulation on ston.fi
 
 **Do:**
-- [ ] Create `internal/bot/handlers/swap.go`
-- [ ] Parse /swap command: `/swap <amount> <from_token> <to_token> stonfi`
-- [ ] Call ston.fi SimulateSwap() to get expected output
-- [ ] Display swap preview with inline keyboard [Confirm] [Cancel] buttons
-- [ ] For POC: Don't execute real swap, just show simulation
+- [x] Create `internal/bot/handlers/swap.go`
+- [x] Parse /swap command: `/swap <amount> <from_token> <to_token> stonfi`
+- [x] Call ston.fi SimulateSwap() to get expected output
+- [x] Display swap preview with inline keyboard [Confirm] [Cancel] buttons
+- [x] For POC: Don't execute real swap, just show simulation
 
 **Files:**
 - `internal/bot/handlers/swap.go` - create swap command handler
