@@ -2183,13 +2183,13 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 52: Add unit tests for arbitrage calculator
 
 **Do:**
-- [ ] Create `internal/arbitrage/calculator_test.go`
-- [ ] Test position sizing (50% of balance)
-- [ ] Test minimum balance enforcement (1 TON, 10 GALA)
-- [ ] Test safety margin calculation (1.5x)
-- [ ] Test insufficient balance scenarios
-- [ ] Test edge cases (exactly at minimum, slightly above minimum)
-- [ ] Aim for 90% coverage
+- [x] Create `internal/arbitrage/calculator_test.go`
+- [x] Test position sizing (50% of balance)
+- [x] Test minimum balance enforcement (1 TON, 10 GALA)
+- [x] Test safety margin calculation (1.5x)
+- [x] Test insufficient balance scenarios
+- [x] Test edge cases (exactly at minimum, slightly above minimum)
+- [x] Aim for 90% coverage
 
 **Files:**
 - `internal/arbitrage/calculator_test.go` - create calculator tests
