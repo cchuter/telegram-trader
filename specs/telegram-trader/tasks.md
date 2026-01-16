@@ -486,11 +486,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 12: Implement ston.fi DEX client skeleton
 
 **Do:**
-- [ ] Create `internal/dex/stonfi/client.go` with Client struct
-- [ ] Add HTTP client using net/http
-- [ ] Implement SimulateSwap() method calling POST /v1/swap/simulate endpoint
-- [ ] Return simulated output amount, fee, slippage from API response
-- [ ] Create `internal/dex/interfaces.go` with DEX Client interface
+- [x] Create `internal/dex/stonfi/client.go` with Client struct
+- [x] Add HTTP client using net/http
+- [x] Implement SimulateSwap() method calling POST /v1/swap/simulate endpoint
+- [x] Return simulated output amount, fee, slippage from API response
+- [x] Create `internal/dex/interfaces.go` with DEX Client interface
 
 **Files:**
 - `internal/dex/interfaces.go` - create DEX client interface
