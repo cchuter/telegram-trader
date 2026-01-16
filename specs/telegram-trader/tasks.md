@@ -1093,11 +1093,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 27: Implement basic key encryption for wallet credentials
 
 **Do:**
-- [ ] Create `internal/wallet/encryption.go` with EncryptionService
-- [ ] Implement Encrypt() and Decrypt() methods using AES-256-GCM
-- [ ] Read master key from ENCRYPTION_KEY environment variable
-- [ ] Update wallet manager to encrypt private keys before saving to database
-- [ ] For POC: Store master key in .env (warn in comment this is dev-only)
+- [x] Create `internal/wallet/encryption.go` with EncryptionService
+- [x] Implement Encrypt() and Decrypt() methods using AES-256-GCM
+- [x] Read master key from ENCRYPTION_KEY environment variable
+- [x] Update wallet manager to encrypt private keys before saving to database
+- [x] For POC: Store master key in .env (warn in comment this is dev-only)
 
 **Files:**
 - `internal/wallet/encryption.go` - create encryption service

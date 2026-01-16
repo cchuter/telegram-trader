@@ -11,14 +11,35 @@ import (
 
 // Manager handles wallet connection operations
 type Manager struct {
-	db storage.Database
+	db         storage.Database
+	encryption *EncryptionService
 }
 
 // NewManager creates a new wallet Manager instance
-func NewManager(db storage.Database) *Manager {
-	return &Manager{
-		db: db,
+// encryptionKey should be a base64-encoded 32-byte key for AES-256
+func NewManager(db storage.Database, encryptionKey string) (*Manager, error) {
+	// Initialize encryption service
+	encryption, err := NewEncryptionService(encryptionKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize encryption service: %w", err)
 	}
+
+	return &Manager{
+		db:         db,
+		encryption: encryption,
+	}, nil
+}
+
+// EncryptPrivateKey encrypts a private key for secure storage
+// This method can be used when storing wallet credentials
+func (m *Manager) EncryptPrivateKey(privateKey string) (string, error) {
+	return m.encryption.Encrypt(privateKey)
+}
+
+// DecryptPrivateKey decrypts a private key for use
+// This method can be used when retrieving wallet credentials
+func (m *Manager) DecryptPrivateKey(encryptedKey string) (string, error) {
+	return m.encryption.Decrypt(encryptedKey)
 }
 
 // ConnectTonWallet connects a TON wallet for the user

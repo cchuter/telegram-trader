@@ -26,6 +26,9 @@ func main() {
 	if cfg.DatabaseURL == "" {
 		log.Fatal("DATABASE_URL environment variable is required")
 	}
+	if cfg.EncryptionKey == "" {
+		log.Fatal("ENCRYPTION_KEY environment variable is required")
+	}
 
 	// Initialize database
 	db, err := storage.InitDB(cfg.DatabaseURL)
@@ -86,7 +89,11 @@ func main() {
 	}
 
 	// Create and start the bot
-	b := bot.New(cfg.BotToken, db, cfg.BotAdminUserIDs, dexClient, galaClient, logger, tradeLogger)
+	b, err := bot.New(cfg.BotToken, db, cfg.BotAdminUserIDs, cfg.EncryptionKey, dexClient, galaClient, logger, tradeLogger)
+	if err != nil {
+		logger.Fatal("Failed to create bot", err, nil)
+		log.Fatalf("Failed to create bot: %v", err)
+	}
 	logger.Info("Starting Telegram bot", map[string]interface{}{
 		"admin_user_ids": cfg.BotAdminUserIDs,
 	})

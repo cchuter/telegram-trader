@@ -33,19 +33,25 @@ type Bot struct {
 }
 
 // New creates a new Bot instance
-func New(token string, db storage.Database, adminUserIDs string, dexClient dex.Client, galaClient *galachain.Client, logger *logging.Logger, tradeLogger *logging.TradeLogger) *Bot {
+func New(token string, db storage.Database, adminUserIDs string, encryptionKey string, dexClient dex.Client, galaClient *galachain.Client, logger *logging.Logger, tradeLogger *logging.TradeLogger) (*Bot, error) {
+	// Initialize wallet manager with encryption
+	walletManager, err := wallet.NewManager(db, encryptionKey)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Bot{
 		token:           token,
 		db:              db,
 		authMiddleware:  middleware.NewAuthMiddleware(db, adminUserIDs),
 		rateLimiter:     middleware.NewRateLimiter(10, 1*time.Minute),
-		walletManager:   wallet.NewManager(db),
+		walletManager:   walletManager,
 		dexClient:       dexClient,
 		galaClient:      galaClient,
 		arbitrageEngine: arbitrage.NewEngine(dexClient, galaClient),
 		logger:          logger,
 		tradeLogger:     tradeLogger,
-	}
+	}, nil
 }
 
 // Start initializes the bot and starts polling for updates
