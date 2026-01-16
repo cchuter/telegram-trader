@@ -771,10 +771,10 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 19: Implement GetPrice gRPC handler
 
 **Do:**
-- [ ] Add getPrice() method to GrpcHandlers class
-- [ ] Call GSwapClient.getPrice() internally
-- [ ] Return PriceResponse with price, timestamp
-- [ ] Wire into gRPC server
+- [x] Add getPrice() method to GrpcHandlers class
+- [x] Call GSwapClient.getPrice() internally
+- [x] Return PriceResponse with price, timestamp
+- [x] Wire into gRPC server
 
 **Files:**
 - `galachain-service/src/server/handlers.ts` - update with getPrice handler
