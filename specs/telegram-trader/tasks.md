@@ -891,11 +891,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 22: Implement /arbitrage command handler
 
 **Do:**
-- [ ] Create `internal/bot/handlers/arbitrage.go`
-- [ ] Call arbitrage engine DetectOpportunity()
-- [ ] Display opportunity details: direction, spread, estimated profit
-- [ ] Show [Execute] [Cancel] inline keyboard
-- [ ] Don't implement execution callback yet (POC phase)
+- [x] Create `internal/bot/handlers/arbitrage.go`
+- [x] Call arbitrage engine DetectOpportunity()
+- [x] Display opportunity details: direction, spread, estimated profit
+- [x] Show [Execute] [Cancel] inline keyboard
+- [x] Don't implement execution callback yet (POC phase)
 
 **Files:**
 - `internal/bot/handlers/arbitrage.go` - create arbitrage command handler

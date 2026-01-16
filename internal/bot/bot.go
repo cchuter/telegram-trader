@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/cchuter/telegram-trader/internal/arbitrage"
 	"github.com/cchuter/telegram-trader/internal/bot/handlers"
 	"github.com/cchuter/telegram-trader/internal/bot/middleware"
 	"github.com/cchuter/telegram-trader/internal/dex"
@@ -23,17 +24,19 @@ type Bot struct {
 	walletManager  *wallet.Manager
 	dexClient      dex.Client
 	galaClient     *galachain.Client
+	arbitrageEngine *arbitrage.Engine
 }
 
 // New creates a new Bot instance
 func New(token string, db storage.Database, adminUserIDs string, dexClient dex.Client, galaClient *galachain.Client) *Bot {
 	return &Bot{
-		token:          token,
-		db:             db,
-		authMiddleware: middleware.NewAuthMiddleware(db, adminUserIDs),
-		walletManager:  wallet.NewManager(db),
-		dexClient:      dexClient,
-		galaClient:     galaClient,
+		token:           token,
+		db:              db,
+		authMiddleware:  middleware.NewAuthMiddleware(db, adminUserIDs),
+		walletManager:   wallet.NewManager(db),
+		dexClient:       dexClient,
+		galaClient:      galaClient,
+		arbitrageEngine: arbitrage.NewEngine(dexClient, galaClient),
 	}
 }
 
@@ -57,6 +60,7 @@ func (b *Bot) Start(ctx context.Context) error {
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/wallet", bot.MatchTypePrefix, b.handleWallet)
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/swap", bot.MatchTypePrefix, b.handleSwap)
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/price", bot.MatchTypeExact, b.handlePrice)
+	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/arbitrage", bot.MatchTypeExact, b.handleArbitrage)
 
 	log.Println("Bot started successfully")
 	b.bot.Start(ctx)
@@ -178,4 +182,16 @@ func (b *Bot) handlePrice(ctx context.Context, botInstance *bot.Bot, update *mod
 
 	// Call the handler
 	handlers.HandlePrice(ctx, botInstance, update, b.dexClient, b.galaClient)
+}
+
+// handleArbitrage handles the /arbitrage command
+func (b *Bot) handleArbitrage(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Authenticate user
+	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
+		log.Printf("Authentication failed for user: %v", err)
+		return
+	}
+
+	// Call the handler
+	handlers.HandleArbitrage(ctx, botInstance, update, b.arbitrageEngine)
 }
