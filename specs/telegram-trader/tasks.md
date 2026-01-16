@@ -2004,12 +2004,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 48: Implement /orders command for trade history
 
 **Do:**
-- [ ] Create `internal/bot/handlers/orders.go` with orders handler
-- [ ] Query trade_history table for user's trades
-- [ ] Show last 10 trades by default
-- [ ] Format each trade: timestamp, type, tokens, amounts, status, tx hash link
-- [ ] Support /orders <count> to show more (max 100)
-- [ ] Add inline buttons [Refresh] [Export CSV]
+- [x] Create `internal/bot/handlers/orders.go` with orders handler
+- [x] Query trade_history table for user's trades
+- [x] Show last 10 trades by default
+- [x] Format each trade: timestamp, type, tokens, amounts, status, tx hash link
+- [x] Support /orders <count> to show more (max 100)
+- [x] Add inline buttons [Refresh] [Export CSV]
 
 **Files:**
 - `internal/bot/handlers/orders.go` - create orders handler

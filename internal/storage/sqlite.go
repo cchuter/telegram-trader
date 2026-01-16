@@ -18,6 +18,9 @@ var initialSchemaMigration string
 //go:embed migrations/002_add_tonconnect_fields.up.sql
 var tonconnectFieldsMigration string
 
+//go:embed migrations/004_trade_history.up.sql
+var tradeHistoryMigration string
+
 // SQLiteDB implements the Database interface using SQLite
 type SQLiteDB struct {
 	db *sql.DB
@@ -63,6 +66,7 @@ func runMigrations(db *sql.DB) error {
 	migrations := []string{
 		initialSchemaMigration,
 		tonconnectFieldsMigration,
+		tradeHistoryMigration,
 	}
 
 	for i, migration := range migrations {
@@ -239,6 +243,99 @@ func (s *SQLiteDB) SaveWalletSession(ctx context.Context, session *WalletSession
 	}
 
 	return nil
+}
+
+// GetTradeHistory retrieves trade history for a user, limited to N most recent trades
+func (s *SQLiteDB) GetTradeHistory(ctx context.Context, userID int64, limit int) ([]*TradeHistory, error) {
+	// Cap limit at 100
+	if limit > 100 {
+		limit = 100
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+
+	query := `
+		SELECT id, user_id, trade_type, chain, from_token, to_token,
+		       amount_in, amount_out, fee, tx_hash_ton, tx_hash_gala,
+		       status, error_message, execution_time_ms, profit_usd,
+		       created_at, completed_at
+		FROM trade_history
+		WHERE user_id = ?
+		ORDER BY created_at DESC
+		LIMIT ?
+	`
+
+	rows, err := s.db.QueryContext(ctx, query, userID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query trade history: %w", err)
+	}
+	defer rows.Close()
+
+	var trades []*TradeHistory
+	for rows.Next() {
+		var trade TradeHistory
+		var amountOut, fee, txHashTon, txHashGala, errorMessage, profitUSD sql.NullString
+		var executionTimeMs sql.NullInt64
+		var completedAt sql.NullTime
+
+		err := rows.Scan(
+			&trade.ID,
+			&trade.UserID,
+			&trade.TradeType,
+			&trade.Chain,
+			&trade.FromToken,
+			&trade.ToToken,
+			&trade.AmountIn,
+			&amountOut,
+			&fee,
+			&txHashTon,
+			&txHashGala,
+			&trade.Status,
+			&errorMessage,
+			&executionTimeMs,
+			&profitUSD,
+			&trade.CreatedAt,
+			&completedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan trade history row: %w", err)
+		}
+
+		// Handle nullable fields
+		if amountOut.Valid {
+			trade.AmountOut = amountOut.String
+		}
+		if fee.Valid {
+			trade.Fee = fee.String
+		}
+		if txHashTon.Valid {
+			trade.TxHashTon = txHashTon.String
+		}
+		if txHashGala.Valid {
+			trade.TxHashGala = txHashGala.String
+		}
+		if errorMessage.Valid {
+			trade.ErrorMessage = errorMessage.String
+		}
+		if executionTimeMs.Valid {
+			trade.ExecutionTimeMs = int(executionTimeMs.Int64)
+		}
+		if profitUSD.Valid {
+			trade.ProfitUSD = profitUSD.String
+		}
+		if completedAt.Valid {
+			trade.CompletedAt = &completedAt.Time
+		}
+
+		trades = append(trades, &trade)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating trade history rows: %w", err)
+	}
+
+	return trades, nil
 }
 
 // Close closes the database connection

@@ -12,6 +12,9 @@ type Database interface {
 	GetWalletSession(ctx context.Context, userID int64, walletType string) (*WalletSession, error)
 	SaveWalletSession(ctx context.Context, session *WalletSession) error
 
+	// Trade history methods
+	GetTradeHistory(ctx context.Context, userID int64, limit int) ([]*TradeHistory, error)
+
 	// Close closes the database connection
 	Close() error
 }

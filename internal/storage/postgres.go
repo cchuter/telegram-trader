@@ -121,6 +121,40 @@ func runPostgresMigrations(db *sql.DB) error {
 		return err
 	}
 
+	// Migration 4: Trade history
+	if err := applyMigration(db, 4, func(tx *sql.Tx) error {
+		_, err := tx.Exec(`
+			-- Trade history table for tracking swaps and arbitrage trades
+			CREATE TABLE IF NOT EXISTS trade_history (
+				id BIGSERIAL PRIMARY KEY,
+				user_id BIGINT NOT NULL,
+				trade_type TEXT NOT NULL CHECK(trade_type IN ('swap', 'arbitrage')),
+				chain TEXT NOT NULL,
+				from_token TEXT NOT NULL,
+				to_token TEXT NOT NULL,
+				amount_in TEXT NOT NULL,
+				amount_out TEXT,
+				fee TEXT,
+				tx_hash_ton TEXT,
+				tx_hash_gala TEXT,
+				status TEXT NOT NULL CHECK(status IN ('pending', 'success', 'failed', 'partial')),
+				error_message TEXT,
+				execution_time_ms INTEGER,
+				profit_usd TEXT,
+				created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				completed_at TIMESTAMP,
+				FOREIGN KEY (user_id) REFERENCES user_sessions(user_id) ON DELETE CASCADE
+			);
+
+			CREATE INDEX IF NOT EXISTS idx_trade_history_user_id ON trade_history(user_id);
+			CREATE INDEX IF NOT EXISTS idx_trade_history_created_at ON trade_history(created_at);
+			CREATE INDEX IF NOT EXISTS idx_trade_history_status ON trade_history(status);
+		`)
+		return err
+	}); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -323,6 +357,99 @@ func (p *PostgresDB) SaveWalletSession(ctx context.Context, session *WalletSessi
 	}
 
 	return nil
+}
+
+// GetTradeHistory retrieves trade history for a user, limited to N most recent trades
+func (p *PostgresDB) GetTradeHistory(ctx context.Context, userID int64, limit int) ([]*TradeHistory, error) {
+	// Cap limit at 100
+	if limit > 100 {
+		limit = 100
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+
+	query := `
+		SELECT id, user_id, trade_type, chain, from_token, to_token,
+		       amount_in, amount_out, fee, tx_hash_ton, tx_hash_gala,
+		       status, error_message, execution_time_ms, profit_usd,
+		       created_at, completed_at
+		FROM trade_history
+		WHERE user_id = $1
+		ORDER BY created_at DESC
+		LIMIT $2
+	`
+
+	rows, err := p.db.QueryContext(ctx, query, userID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query trade history: %w", err)
+	}
+	defer rows.Close()
+
+	var trades []*TradeHistory
+	for rows.Next() {
+		var trade TradeHistory
+		var amountOut, fee, txHashTon, txHashGala, errorMessage, profitUSD sql.NullString
+		var executionTimeMs sql.NullInt64
+		var completedAt sql.NullTime
+
+		err := rows.Scan(
+			&trade.ID,
+			&trade.UserID,
+			&trade.TradeType,
+			&trade.Chain,
+			&trade.FromToken,
+			&trade.ToToken,
+			&trade.AmountIn,
+			&amountOut,
+			&fee,
+			&txHashTon,
+			&txHashGala,
+			&trade.Status,
+			&errorMessage,
+			&executionTimeMs,
+			&profitUSD,
+			&trade.CreatedAt,
+			&completedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan trade history row: %w", err)
+		}
+
+		// Handle nullable fields
+		if amountOut.Valid {
+			trade.AmountOut = amountOut.String
+		}
+		if fee.Valid {
+			trade.Fee = fee.String
+		}
+		if txHashTon.Valid {
+			trade.TxHashTon = txHashTon.String
+		}
+		if txHashGala.Valid {
+			trade.TxHashGala = txHashGala.String
+		}
+		if errorMessage.Valid {
+			trade.ErrorMessage = errorMessage.String
+		}
+		if executionTimeMs.Valid {
+			trade.ExecutionTimeMs = int(executionTimeMs.Int64)
+		}
+		if profitUSD.Valid {
+			trade.ProfitUSD = profitUSD.String
+		}
+		if completedAt.Valid {
+			trade.CompletedAt = &completedAt.Time
+		}
+
+		trades = append(trades, &trade)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating trade history rows: %w", err)
+	}
+
+	return trades, nil
 }
 
 // Close closes the database connection
