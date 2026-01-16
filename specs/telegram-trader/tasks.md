@@ -2397,13 +2397,13 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 57: Add integration test for gRPC communication
 
 **Do:**
-- [ ] Create `test/integration/grpc_test.go`
-- [ ] Start real GalaChain gRPC server in test
-- [ ] Create real gRPC client
-- [ ] Test GetPrice RPC call
-- [ ] Test GetBalance RPC call
-- [ ] Test ExecuteSwap RPC call (mock execution, verify request/response)
-- [ ] Test error handling (server unreachable)
+- [x] Create `test/integration/grpc_test.go`
+- [x] Start real GalaChain gRPC server in test
+- [x] Create real gRPC client
+- [x] Test GetPrice RPC call
+- [x] Test GetBalance RPC call
+- [x] Test ExecuteSwap RPC call (mock execution, verify request/response)
+- [x] Test error handling (server unreachable)
 
 **Files:**
 - `test/integration/grpc_test.go` - create integration test

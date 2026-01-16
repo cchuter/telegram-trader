@@ -4,7 +4,7 @@
   "description": "TypeScript service for GalaChain operations",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && mkdir -p dist/types && cp src/types/*.js src/types/*.d.ts dist/types/",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "proto": "grpc_tools_node_protoc --js_out=import_style=commonjs,binary:./src/types --grpc_out=grpc_js:./src/types --plugin=protoc-gen-ts=./node_modules/.bin/protoc-gen-ts --ts_out=grpc_js:./src/types -I ../proto ../proto/galachain.proto",
