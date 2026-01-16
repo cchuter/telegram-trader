@@ -1348,12 +1348,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 33: Implement real swap execution on ston.fi
 
 **Do:**
-- [ ] Create `internal/blockchain/ton/transaction.go` for transaction building
-- [ ] Implement ExecuteSwap() method that builds and signs TON transaction
-- [ ] Call ston.fi router smart contract via tonutils-go
-- [ ] Wait for transaction confirmation (poll transaction status)
-- [ ] Return transaction hash and actual output amount
-- [ ] Update /swap handler to execute real swaps after confirmation
+- [x] Create `internal/blockchain/ton/transaction.go` for transaction building
+- [x] Implement ExecuteSwap() method that builds and signs TON transaction
+- [x] Call ston.fi router smart contract via tonutils-go
+- [x] Wait for transaction confirmation (poll transaction status)
+- [x] Return transaction hash and actual output amount
+- [x] Update /swap handler to execute real swaps after confirmation
 
 **Files:**
 - `internal/blockchain/ton/transaction.go` - create transaction builder

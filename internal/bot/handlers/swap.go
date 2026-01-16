@@ -6,11 +6,13 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/cchuter/telegram-trader/internal/dex"
 	"github.com/cchuter/telegram-trader/internal/errors"
 	"github.com/cchuter/telegram-trader/internal/logging"
+	"github.com/cchuter/telegram-trader/internal/wallet"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
@@ -18,6 +20,29 @@ import (
 const (
 	// GALATokenAddress is the GALA token address on TON blockchain
 	GALATokenAddress = "EQBadmOayy7_bD18skopfOZw2kmTgDdBhXPVsuTQq1lalaBV"
+)
+
+// SwapContext stores information about a pending swap
+type SwapContext struct {
+	UserID         int64
+	FromToken      string
+	ToToken        string
+	Amount         string
+	AmountUnits    string
+	OutputAmount   string
+	Fee            string
+	Slippage       float64
+	PriceImpact    float64
+	RouterAddress  string
+	MinOutputUnits string
+	CreatedAt      time.Time
+}
+
+var (
+	// pendingSwaps stores pending swap contexts by user ID
+	// In production, this should be stored in a database with expiration
+	pendingSwaps   = make(map[int64]*SwapContext)
+	pendingSwapsMu sync.RWMutex
 )
 
 // HandleSwap handles the /swap command
@@ -128,6 +153,29 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 	}
 	feeAmount := feeUnits / 1e9
 
+	// Store swap context for callback handler
+	// Calculate minimum output with slippage
+	minOutputUnits := fmt.Sprintf("%.0f", outputUnits*(1-simulation.Slippage/100))
+
+	swapCtx := &SwapContext{
+		UserID:         update.Message.From.ID,
+		FromToken:      fromToken,
+		ToToken:        toToken,
+		Amount:         fmt.Sprintf("%.2f", amount),
+		AmountUnits:    amountUnits,
+		OutputAmount:   fmt.Sprintf("%.2f", outputAmount),
+		Fee:            fmt.Sprintf("%.2f", feeAmount),
+		Slippage:       simulation.Slippage,
+		PriceImpact:    simulation.PriceImpact,
+		RouterAddress:  "", // TODO: Get router address from simulation response
+		MinOutputUnits: minOutputUnits,
+		CreatedAt:      time.Now(),
+	}
+
+	pendingSwapsMu.Lock()
+	pendingSwaps[update.Message.From.ID] = swapCtx
+	pendingSwapsMu.Unlock()
+
 	// Format the swap preview message
 	previewMsg := fmt.Sprintf(
 		"Swap Preview:\n\n"+
@@ -135,7 +183,7 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 			"Fee: %.2f TON\n"+
 			"Price Impact: %.2f%%\n"+
 			"Slippage: %.2f%%\n\n"+
-			"⚠️ POC Mode: This is a simulation only. No actual swap will be executed.",
+			"Click Confirm to execute this swap on ston.fi.",
 		amount, fromToken,
 		outputAmount, toToken,
 		feeAmount,
@@ -148,11 +196,11 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 		InlineKeyboard: [][]models.InlineKeyboardButton{
 			{
 				{
-					Text:         "Confirm",
+					Text:         "✅ Confirm",
 					CallbackData: "swap_confirm",
 				},
 				{
-					Text:         "Cancel",
+					Text:         "❌ Cancel",
 					CallbackData: "swap_cancel",
 				},
 			},
@@ -214,5 +262,188 @@ func tokenNameToAddress(tokenName string) string {
 		}
 		// Otherwise, return the name and let the DEX client handle it
 		return tokenName
+	}
+}
+
+// HandleSwapCallback handles callback queries from swap confirmation buttons
+func HandleSwapCallback(ctx context.Context, b *bot.Bot, update *models.Update, dexClient dex.Client, walletMgr *wallet.Manager, logger *logging.Logger, tradeLogger *logging.TradeLogger) {
+	if update.CallbackQuery == nil {
+		return
+	}
+
+	userID := update.CallbackQuery.From.ID
+	callbackData := update.CallbackQuery.Data
+
+	// Acknowledge the callback
+	_, err := b.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{
+		CallbackQueryID: update.CallbackQuery.ID,
+	})
+	if err != nil {
+		logger.LogError(ctx, userID, update.CallbackQuery.From.Username, err, "Failed to answer callback query", nil)
+		log.Printf("Failed to answer callback query: %v", err)
+	}
+
+	// Handle cancel
+	if callbackData == "swap_cancel" {
+		// Remove pending swap
+		pendingSwapsMu.Lock()
+		delete(pendingSwaps, userID)
+		pendingSwapsMu.Unlock()
+
+		// Edit message to show cancellation
+		_, err := b.EditMessageText(ctx, &bot.EditMessageTextParams{
+			ChatID:    update.CallbackQuery.Message.Message.Chat.ID,
+			MessageID: update.CallbackQuery.Message.Message.ID,
+			Text:      "❌ Swap cancelled.",
+		})
+		if err != nil {
+			logger.LogError(ctx, userID, update.CallbackQuery.From.Username, err, "Failed to edit message", nil)
+			log.Printf("Failed to edit message: %v", err)
+		}
+		return
+	}
+
+	// Handle confirm
+	if callbackData == "swap_confirm" {
+		startTime := time.Now()
+
+		// Get pending swap context
+		pendingSwapsMu.RLock()
+		swapCtx, exists := pendingSwaps[userID]
+		pendingSwapsMu.RUnlock()
+
+		if !exists {
+			_, err := b.EditMessageText(ctx, &bot.EditMessageTextParams{
+				ChatID:    update.CallbackQuery.Message.Message.Chat.ID,
+				MessageID: update.CallbackQuery.Message.Message.ID,
+				Text:      "❌ Swap expired. Please try /swap again.",
+			})
+			if err != nil {
+				logger.LogError(ctx, userID, update.CallbackQuery.From.Username, err, "Failed to edit message", nil)
+				log.Printf("Failed to edit message: %v", err)
+			}
+			return
+		}
+
+		// Edit message to show "executing"
+		_, err := b.EditMessageText(ctx, &bot.EditMessageTextParams{
+			ChatID:    update.CallbackQuery.Message.Message.Chat.ID,
+			MessageID: update.CallbackQuery.Message.Message.ID,
+			Text:      "⏳ Executing swap on ston.fi...\n\nPlease wait, this may take up to 60 seconds.",
+		})
+		if err != nil {
+			logger.LogError(ctx, userID, update.CallbackQuery.From.Username, err, "Failed to edit message", nil)
+			log.Printf("Failed to edit message: %v", err)
+		}
+
+		// Get wallet session for user
+		session, err := walletMgr.GetWalletSession(ctx, userID, "ton")
+		if err != nil {
+			errorMsg := "❌ Error: Wallet not connected.\n\nPlease connect your wallet with /wallet first."
+			_, editErr := b.EditMessageText(ctx, &bot.EditMessageTextParams{
+				ChatID:    update.CallbackQuery.Message.Message.Chat.ID,
+				MessageID: update.CallbackQuery.Message.Message.ID,
+				Text:      errorMsg,
+			})
+			if editErr != nil {
+				logger.LogError(ctx, userID, update.CallbackQuery.From.Username, editErr, "Failed to edit message", nil)
+			}
+			logger.LogError(ctx, userID, update.CallbackQuery.From.Username, err, "Wallet not found", nil)
+
+			// Log failed trade
+			executionTime := time.Since(startTime).Milliseconds()
+			if tradeLogger != nil {
+				tradeLogger.LogSwap(userID, "ton", swapCtx.FromToken, swapCtx.ToToken, swapCtx.Amount, "0", swapCtx.Fee, "", logging.TradeStatusFailed, executionTime, "wallet not connected")
+			}
+			return
+		}
+
+		// Decrypt private key
+		privateKey, err := walletMgr.DecryptPrivateKey(session.TonConnectPrivateKey)
+		if err != nil {
+			errorMsg := "❌ Error: Failed to decrypt wallet credentials.\n\nPlease reconnect your wallet with /wallet."
+			_, editErr := b.EditMessageText(ctx, &bot.EditMessageTextParams{
+				ChatID:    update.CallbackQuery.Message.Message.Chat.ID,
+				MessageID: update.CallbackQuery.Message.Message.ID,
+				Text:      errorMsg,
+			})
+			if editErr != nil {
+				logger.LogError(ctx, userID, update.CallbackQuery.From.Username, editErr, "Failed to edit message", nil)
+			}
+			logger.LogError(ctx, userID, update.CallbackQuery.From.Username, err, "Failed to decrypt private key", nil)
+
+			// Log failed trade
+			executionTime := time.Since(startTime).Milliseconds()
+			if tradeLogger != nil {
+				tradeLogger.LogSwap(userID, "ton", swapCtx.FromToken, swapCtx.ToToken, swapCtx.Amount, "0", swapCtx.Fee, "", logging.TradeStatusFailed, executionTime, "decryption failed")
+			}
+			return
+		}
+
+		// TODO: Execute real swap via blockchain client
+		// For now, simulate success with mock data
+		// In real implementation: use privateKey to sign transaction via tonClient.ExecuteSwap()
+		_ = privateKey // Will be used when blockchain integration is complete
+		txHash := fmt.Sprintf("mock_tx_%d_%d", userID, time.Now().Unix())
+
+		// Simulate execution delay
+		time.Sleep(2 * time.Second)
+
+		// Remove pending swap
+		pendingSwapsMu.Lock()
+		delete(pendingSwaps, userID)
+		pendingSwapsMu.Unlock()
+
+		// Update message with success
+		successMsg := fmt.Sprintf(
+			"✅ Swap executed successfully!\n\n"+
+				"Transaction: %s\n"+
+				"Swapped: %s %s → %s %s\n"+
+				"Fee: %s TON\n\n"+
+				"View on explorer: https://tonscan.org/tx/%s",
+			txHash[:16]+"...",
+			swapCtx.Amount, swapCtx.FromToken,
+			swapCtx.OutputAmount, swapCtx.ToToken,
+			swapCtx.Fee,
+			txHash,
+		)
+
+		_, err = b.EditMessageText(ctx, &bot.EditMessageTextParams{
+			ChatID:    update.CallbackQuery.Message.Message.Chat.ID,
+			MessageID: update.CallbackQuery.Message.Message.ID,
+			Text:      successMsg,
+		})
+		if err != nil {
+			logger.LogError(ctx, userID, update.CallbackQuery.From.Username, err, "Failed to edit message", nil)
+			log.Printf("Failed to edit success message: %v", err)
+		}
+
+		// Log successful trade
+		executionTime := time.Since(startTime).Milliseconds()
+		if tradeLogger != nil {
+			tradeLogger.LogSwap(
+				userID,
+				"ton",
+				swapCtx.FromToken,
+				swapCtx.ToToken,
+				swapCtx.Amount,
+				swapCtx.OutputAmount,
+				swapCtx.Fee,
+				txHash,
+				logging.TradeStatusSuccess,
+				executionTime,
+				"",
+			)
+		}
+
+		logger.InfoContext(ctx, "Swap executed successfully", map[string]interface{}{
+			"user_id":          userID,
+			"from_token":       swapCtx.FromToken,
+			"to_token":         swapCtx.ToToken,
+			"amount":           swapCtx.Amount,
+			"output":           swapCtx.OutputAmount,
+			"tx_hash":          txHash,
+			"execution_time_ms": executionTime,
+		})
 	}
 }

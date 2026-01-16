@@ -84,6 +84,11 @@ func (m *Manager) GetTonWallet(ctx context.Context, userID int64) (*storage.Wall
 	return m.db.GetWalletSession(ctx, userID, "ton")
 }
 
+// GetWalletSession retrieves a wallet session for a user
+func (m *Manager) GetWalletSession(ctx context.Context, userID int64, walletType string) (*storage.WalletSession, error) {
+	return m.db.GetWalletSession(ctx, userID, walletType)
+}
+
 // InitiateTonConnect initiates a TonConnect wallet connection session
 // Returns the session and connection URLs (QR code deep link and TonKeeper URL)
 func (m *Manager) InitiateTonConnect(ctx context.Context, userID int64) (*TonConnectSession, string, string, error) {
