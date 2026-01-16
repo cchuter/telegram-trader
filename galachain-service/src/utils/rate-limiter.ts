@@ -28,9 +28,7 @@ export class RateLimiter {
     const now = Date.now();
 
     // Remove requests outside the current window
-    this.requests = this.requests.filter(
-      (timestamp) => now - timestamp < this.windowMs
-    );
+    this.requests = this.requests.filter((timestamp) => now - timestamp < this.windowMs);
 
     // If we're at the limit, wait until the oldest request expires
     if (this.requests.length >= this.maxRequests) {
@@ -53,9 +51,7 @@ export class RateLimiter {
    */
   getCurrentCount(): number {
     const now = Date.now();
-    this.requests = this.requests.filter(
-      (timestamp) => now - timestamp < this.windowMs
-    );
+    this.requests = this.requests.filter((timestamp) => now - timestamp < this.windowMs);
     return this.requests.length;
   }
 

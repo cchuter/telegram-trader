@@ -32,7 +32,13 @@ export class GrpcHandlers {
     const correlationId = extractCorrelationID(call.metadata);
     const userId = call.request.getUserId();
 
-    this.logger.logWithContext(LogLevel.INFO, 'GetBalance called', correlationId, userId, 'get_balance');
+    this.logger.logWithContext(
+      LogLevel.INFO,
+      'GetBalance called',
+      correlationId,
+      userId,
+      'get_balance'
+    );
 
     // Create response with hardcoded balances for POC
     const response = new messages.BalanceResponse();
@@ -66,7 +72,15 @@ export class GrpcHandlers {
     const correlationId = extractCorrelationID(call.metadata);
     const pair = call.request.getPair();
 
-    this.logger.logWithContext(LogLevel.INFO, 'GetPrice called', correlationId, undefined, 'get_price', undefined, { pair });
+    this.logger.logWithContext(
+      LogLevel.INFO,
+      'GetPrice called',
+      correlationId,
+      undefined,
+      'get_price',
+      undefined,
+      { pair }
+    );
 
     try {
       // Parse pair format (e.g., "GTON/GALA" -> token0: "GTON", token1: "GALA")
@@ -97,7 +111,15 @@ export class GrpcHandlers {
       callback(null, response);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.logWithContext(LogLevel.ERROR, 'Error in getPrice handler', correlationId, undefined, 'get_price_error', errorMsg, { pair });
+      this.logger.logWithContext(
+        LogLevel.ERROR,
+        'Error in getPrice handler',
+        correlationId,
+        undefined,
+        'get_price_error',
+        errorMsg,
+        { pair }
+      );
       callback(
         {
           code: grpc.status.INTERNAL,
@@ -124,7 +146,15 @@ export class GrpcHandlers {
     const slippageBps = call.request.getSlippageBps();
     const feeTier = call.request.getFeeTier() || 3000; // Default to 0.3% fee tier
 
-    this.logger.logWithContext(LogLevel.INFO, 'ExecuteSwap called', correlationId, userId, 'execute_swap', undefined, { fromToken, toToken, amount, slippageBps, feeTier });
+    this.logger.logWithContext(
+      LogLevel.INFO,
+      'ExecuteSwap called',
+      correlationId,
+      userId,
+      'execute_swap',
+      undefined,
+      { fromToken, toToken, amount, slippageBps, feeTier }
+    );
 
     const response = new messages.SwapResponse();
 
@@ -173,20 +203,33 @@ export class GrpcHandlers {
         response.setErrorMessage(swapResult.errorMessage);
       }
 
-      this.logger.logWithContext(LogLevel.INFO, `Swap ${swapResult.status}`, correlationId, userId, 'swap_result', undefined, { txHash: swapResult.txHash, amountOut: swapResult.amountOut });
+      this.logger.logWithContext(
+        LogLevel.INFO,
+        `Swap ${swapResult.status}`,
+        correlationId,
+        userId,
+        'swap_result',
+        undefined,
+        { txHash: swapResult.txHash, amountOut: swapResult.amountOut }
+      );
 
       callback(null, response);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.logWithContext(LogLevel.ERROR, 'Error in executeSwap handler', correlationId, userId, 'execute_swap_error', errorMsg);
+      this.logger.logWithContext(
+        LogLevel.ERROR,
+        'Error in executeSwap handler',
+        correlationId,
+        userId,
+        'execute_swap_error',
+        errorMsg
+      );
       response.setTxHash('');
       response.setAmountIn('0.0');
       response.setAmountOut('0.0');
       response.setFee('0.0');
       response.setStatus('failed');
-      response.setErrorMessage(
-        error instanceof Error ? error.message : 'Unknown error'
-      );
+      response.setErrorMessage(error instanceof Error ? error.message : 'Unknown error');
       callback(null, response);
     }
   }
@@ -240,18 +283,15 @@ export class GrpcHandlers {
 
         if (!privateKey || !publicKey || !address) {
           response.setSuccess(false);
-          response.setErrorMessage('Private key, public key, and address are required for manual method');
+          response.setErrorMessage(
+            'Private key, public key, and address are required for manual method'
+          );
           callback(null, response);
           return;
         }
 
         // Store the manual wallet (in production, encrypt the private key!)
-        const wallet = this.manualWalletManager.storeWallet(
-          userId,
-          privateKey,
-          publicKey,
-          address
-        );
+        const wallet = this.manualWalletManager.storeWallet(userId, privateKey, publicKey, address);
 
         response.setSessionId(`manual_${userId}`);
         response.setAddress(wallet.address);
@@ -267,7 +307,10 @@ export class GrpcHandlers {
 
       callback(null, response);
     } catch (error) {
-      this.logger.error('Error in createWalletSession handler', error instanceof Error ? error : String(error));
+      this.logger.error(
+        'Error in createWalletSession handler',
+        error instanceof Error ? error : String(error)
+      );
       response.setSuccess(false);
       response.setErrorMessage(error instanceof Error ? error.message : 'Unknown error');
       callback(null, response);
@@ -327,7 +370,10 @@ export class GrpcHandlers {
       await this.gswapClient.getPrice('GTON', 'GALA');
       return true;
     } catch (error) {
-      this.logger.error('GSwap API health check failed', error instanceof Error ? error : String(error));
+      this.logger.error(
+        'GSwap API health check failed',
+        error instanceof Error ? error : String(error)
+      );
       return false;
     }
   }

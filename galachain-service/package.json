@@ -9,7 +9,10 @@
     "dev": "ts-node src/index.ts",
     "proto": "grpc_tools_node_protoc --js_out=import_style=commonjs,binary:./src/types --grpc_out=grpc_js:./src/types --plugin=protoc-gen-ts=./node_modules/.bin/protoc-gen-ts --ts_out=grpc_js:./src/types -I ../proto ../proto/galachain.proto",
     "test": "jest",
-    "test:integration": "jest test/integration.test.ts"
+    "test:integration": "jest test/integration.test.ts",
+    "lint": "eslint 'src/**/*.ts' 'test/**/*.ts'",
+    "lint:fix": "eslint 'src/**/*.ts' 'test/**/*.ts' --fix",
+    "format": "prettier --write 'src/**/*.ts' 'test/**/*.ts'"
   },
   "keywords": [],
   "author": "",
@@ -33,9 +36,14 @@
     "@types/jest": "^30.0.0",
     "@types/qrcode-terminal": "^0.12.2",
     "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.53.0",
+    "@typescript-eslint/parser": "^8.53.0",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
     "grpc_tools_node_protoc_ts": "^5.3.3",
     "grpc-tools": "^1.13.1",
     "jest": "^30.2.0",
+    "prettier": "^3.8.0",
     "ts-jest": "^29.4.6"
   }
 }

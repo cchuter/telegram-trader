@@ -18,8 +18,7 @@ import { GSwapClient } from '../src/gswap/client';
 import { SwapExecutor } from '../src/gswap/swap';
 
 // Test configuration
-const TEST_API_URL =
-  process.env.GSWAP_API_URL || 'https://api-galaswap.gala.com';
+const TEST_API_URL = process.env.GSWAP_API_URL || 'https://api-galaswap.gala.com';
 const TEST_WALLET_ADDRESS = process.env.TEST_WALLET_ADDRESS;
 const TEST_PRIVATE_KEY = process.env.TEST_PRIVATE_KEY;
 
@@ -40,9 +39,7 @@ describe('GSwap Integration Tests', () => {
     it('should execute a real swap on gswap', async () => {
       // Skip if credentials not provided
       if (!TEST_WALLET_ADDRESS || !TEST_PRIVATE_KEY) {
-        console.log(
-          'Skipping swap execution test - no wallet credentials provided'
-        );
+        console.log('Skipping swap execution test - no wallet credentials provided');
         return;
       }
 
@@ -81,9 +78,7 @@ describe('GSwap Integration Tests', () => {
     it('should execute swap via client wrapper', async () => {
       // Skip if credentials not provided
       if (!TEST_WALLET_ADDRESS || !TEST_PRIVATE_KEY) {
-        console.log(
-          'Skipping client swap test - no wallet credentials provided'
-        );
+        console.log('Skipping client swap test - no wallet credentials provided');
         return;
       }
 

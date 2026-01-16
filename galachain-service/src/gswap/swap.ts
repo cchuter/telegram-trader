@@ -89,17 +89,13 @@ export class SwapExecutor {
         };
       }
 
-      console.log(
-        `Swap submitted successfully, tx ID: ${pendingTx.transactionId}`
-      );
+      console.log(`Swap submitted successfully, tx ID: ${pendingTx.transactionId}`);
 
       // Wait for transaction confirmation
       // This polls the event socket until the transaction completes
       const result = await pendingTx.wait();
 
-      console.log(
-        `Swap confirmed: tx hash ${result.transactionHash}, tx ID: ${result.txId}`
-      );
+      console.log(`Swap confirmed: tx hash ${result.transactionHash}, tx ID: ${result.txId}`);
 
       // Parse transaction data to extract swap details
       const swapData = result.Data as {
@@ -134,8 +130,7 @@ export class SwapExecutor {
         amountOut: '0',
         fee: '0',
         status: 'failed',
-        errorMessage:
-          error instanceof Error ? error.message : 'Unknown error',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }

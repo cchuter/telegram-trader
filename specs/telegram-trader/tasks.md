@@ -2792,12 +2792,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 66: Set up ESLint and Prettier for TypeScript
 
 **Do:**
-- [ ] Install ESLint: `npm install --save-dev eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin`
-- [ ] Install Prettier: `npm install --save-dev prettier eslint-config-prettier`
-- [ ] Create `.eslintrc.json` configuration
-- [ ] Create `.prettierrc` configuration
-- [ ] Fix all linting errors in TypeScript codebase
-- [ ] Add lint and format scripts to package.json
+- [x] Install ESLint: `npm install --save-dev eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin`
+- [x] Install Prettier: `npm install --save-dev prettier eslint-config-prettier`
+- [x] Create `.eslintrc.json` configuration
+- [x] Create `.prettierrc` configuration
+- [x] Fix all linting errors in TypeScript codebase
+- [x] Add lint and format scripts to package.json
 
 **Files:**
 - `galachain-service/.eslintrc.json` - create ESLint config

@@ -43,7 +43,10 @@ export interface LogContext {
 /**
  * Creates a log context with correlation ID
  */
-export function createLogContext(correlationId: string, additionalContext: Record<string, any> = {}): LogContext {
+export function createLogContext(
+  correlationId: string,
+  additionalContext: Record<string, any> = {}
+): LogContext {
   return {
     correlationId,
     ...additionalContext,

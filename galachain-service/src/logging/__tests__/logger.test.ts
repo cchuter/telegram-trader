@@ -80,13 +80,7 @@ describe('Logger', () => {
   describe('logWithContext', () => {
     it('should log with correlation ID', () => {
       const logger = new Logger('test-service', LogLevel.INFO);
-      logger.logWithContext(
-        LogLevel.INFO,
-        'test message',
-        'corr-123',
-        undefined,
-        'test_event'
-      );
+      logger.logWithContext(LogLevel.INFO, 'test message', 'corr-123', undefined, 'test_event');
 
       expect(consoleLogSpy).toHaveBeenCalled();
       const logOutput = JSON.parse(consoleLogSpy.mock.calls[0][0]);
@@ -96,13 +90,7 @@ describe('Logger', () => {
 
     it('should log with user ID', () => {
       const logger = new Logger('test-service', LogLevel.INFO);
-      logger.logWithContext(
-        LogLevel.INFO,
-        'test message',
-        'corr-123',
-        12345,
-        'test_event'
-      );
+      logger.logWithContext(LogLevel.INFO, 'test message', 'corr-123', 12345, 'test_event');
 
       const logOutput = JSON.parse(consoleLogSpy.mock.calls[0][0]);
       expect(logOutput.user_id).toBe(12345);

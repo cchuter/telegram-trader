@@ -112,9 +112,7 @@ export class GSwapClient {
 
       return priceData;
     } catch (error) {
-      throw new Error(
-        `Failed to fetch price for ${token0}/${token1}: ${error}`
-      );
+      throw new Error(`Failed to fetch price for ${token0}/${token1}: ${error}`);
     }
   }
 

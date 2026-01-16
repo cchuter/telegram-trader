@@ -57,7 +57,7 @@ describe('RateLimiter', () => {
       expect(limiter.getCurrentCount()).toBe(2);
 
       // Wait for window to expire
-      await new Promise(resolve => setTimeout(resolve, 110));
+      await new Promise((resolve) => setTimeout(resolve, 110));
 
       // Count should be 0 after window expires
       expect(limiter.getCurrentCount()).toBe(0);
@@ -134,11 +134,7 @@ describe('RateLimiter', () => {
       });
 
       // Fire 3 requests concurrently
-      const promises = [
-        limiter.acquire(),
-        limiter.acquire(),
-        limiter.acquire(),
-      ];
+      const promises = [limiter.acquire(), limiter.acquire(), limiter.acquire()];
 
       await Promise.all(promises);
       expect(limiter.getCurrentCount()).toBe(3);
@@ -153,11 +149,7 @@ describe('RateLimiter', () => {
       const start = Date.now();
 
       // Fire 3 requests concurrently
-      const promises = [
-        limiter.acquire(),
-        limiter.acquire(),
-        limiter.acquire(),
-      ];
+      const promises = [limiter.acquire(), limiter.acquire(), limiter.acquire()];
 
       // All should complete, but third should wait
       await Promise.all(promises);
@@ -195,7 +187,7 @@ describe('RateLimiter', () => {
       expect(limiter.getCurrentCount()).toBe(2);
 
       // Wait for window to expire
-      await new Promise(resolve => setTimeout(resolve, 110));
+      await new Promise((resolve) => setTimeout(resolve, 110));
 
       // Expired requests should be filtered out
       expect(limiter.getCurrentCount()).toBe(0);
