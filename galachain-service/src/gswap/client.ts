@@ -7,6 +7,7 @@
 
 import { GSwap, parseTokenClassKey } from '@gala-chain/gswap-sdk';
 import { RateLimiter } from '../utils/rate-limiter';
+import { SwapExecutor, SwapParams, SwapResult } from './swap';
 
 export interface PriceData {
   token0: string;
@@ -24,6 +25,7 @@ export class GSwapClient {
   private readonly apiUrl: string;
   private readonly gswap: GSwap;
   private readonly rateLimiter: RateLimiter;
+  private readonly swapExecutor: SwapExecutor;
   private readonly priceCache: Map<string, CachedPrice> = new Map();
   private readonly CACHE_TTL_MS = 5000; // 5 seconds
   private readonly FEE_TIER = 3000; // 0.3% fee tier
@@ -41,6 +43,9 @@ export class GSwapClient {
       maxRequests: 20,
       windowMs: 10000, // 10 seconds
     });
+
+    // Initialize swap executor
+    this.swapExecutor = new SwapExecutor(apiUrl);
   }
 
   /**
@@ -111,6 +116,26 @@ export class GSwapClient {
         `Failed to fetch price for ${token0}/${token1}: ${error}`
       );
     }
+  }
+
+  /**
+   * Execute a token swap on gswap
+   *
+   * Submits a real swap transaction to the gswap API.
+   * The swap executor handles:
+   * - Fee credit authorization
+   * - Swap submission via RequestTokenSwap
+   * - Status polling until completion
+   *
+   * @param params - Swap parameters
+   * @returns Swap result with tx hash and amounts
+   */
+  async executeSwap(params: SwapParams): Promise<SwapResult> {
+    // Apply rate limiting
+    await this.rateLimiter.acquire();
+
+    // Execute swap via swap executor
+    return this.swapExecutor.executeSwap(params);
   }
 
   /**

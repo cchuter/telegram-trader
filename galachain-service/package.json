@@ -8,7 +8,8 @@
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "proto": "grpc_tools_node_protoc --js_out=import_style=commonjs,binary:./src/types --grpc_out=grpc_js:./src/types --plugin=protoc-gen-ts=./node_modules/.bin/protoc-gen-ts --ts_out=grpc_js:./src/types -I ../proto ../proto/galachain.proto",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:integration": "jest test/integration.test.ts"
   },
   "keywords": [],
   "author": "",
@@ -28,8 +29,11 @@
     "typescript": "^5.9.3"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/qrcode-terminal": "^0.12.2",
     "grpc_tools_node_protoc_ts": "^5.3.3",
-    "grpc-tools": "^1.13.1"
+    "grpc-tools": "^1.13.1",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6"
   }
 }

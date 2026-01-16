@@ -1393,12 +1393,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 34: Implement real swap execution on gswap
 
 **Do:**
-- [ ] Create `galachain-service/src/gswap/swap.ts` for swap execution
-- [ ] Update GSwapClient.executeSwap() to call real gswap API
-- [ ] Authorize fee credit (AuthorizeFee endpoint)
-- [ ] Submit swap via RequestTokenSwap endpoint
-- [ ] Poll swap status until completion
-- [ ] Update ExecuteSwap gRPC handler to call real swap
+- [x] Create `galachain-service/src/gswap/swap.ts` for swap execution
+- [x] Update GSwapClient.executeSwap() to call real gswap API
+- [x] Authorize fee credit (AuthorizeFee endpoint)
+- [x] Submit swap via RequestTokenSwap endpoint
+- [x] Poll swap status until completion
+- [x] Update ExecuteSwap gRPC handler to call real swap
 
 **Files:**
 - `galachain-service/src/gswap/swap.ts` - create swap executor

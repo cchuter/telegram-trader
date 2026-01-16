@@ -101,23 +101,87 @@ export class GrpcHandlers {
 
   /**
    * ExecuteSwap handler - executes a token swap
-   * TODO: Implement actual swap execution logic
+   * Calls real gswap API to execute swap
    */
-  public executeSwap(
+  public async executeSwap(
     call: grpc.ServerUnaryCall<messages.SwapRequest, messages.SwapResponse>,
     callback: grpc.sendUnaryData<messages.SwapResponse>
-  ): void {
-    console.log(`ExecuteSwap called for user: ${call.request.getUserId()}`);
+  ): Promise<void> {
+    const userId = call.request.getUserId();
+    const fromToken = call.request.getFromToken();
+    const toToken = call.request.getToToken();
+    const amount = call.request.getAmount();
+    const slippageBps = call.request.getSlippageBps();
+    const feeTier = call.request.getFeeTier() || 3000; // Default to 0.3% fee tier
+
+    console.log(
+      `ExecuteSwap called for user ${userId}: ${amount} ${fromToken} -> ${toToken}, slippage: ${slippageBps}bps, fee tier: ${feeTier}`
+    );
 
     const response = new messages.SwapResponse();
-    response.setTxHash('');
-    response.setAmountIn('0.0');
-    response.setAmountOut('0.0');
-    response.setFee('0.0');
-    response.setStatus('pending');
-    response.setErrorMessage('');
 
-    callback(null, response);
+    try {
+      // Get wallet session for the user
+      const wallet = this.manualWalletManager.getWallet(userId);
+      if (!wallet) {
+        response.setTxHash('');
+        response.setAmountIn('0.0');
+        response.setAmountOut('0.0');
+        response.setFee('0.0');
+        response.setStatus('failed');
+        response.setErrorMessage('Wallet not connected for user');
+        callback(null, response);
+        return;
+      }
+
+      // Convert token symbols to GalaChain token class keys
+      // Format: "TOKEN|Unit|none|none"
+      const tokenIn = `${fromToken}|Unit|none|none`;
+      const tokenOut = `${toToken}|Unit|none|none`;
+
+      // Calculate minimum output amount based on slippage
+      // For simplicity, we'll use a basic calculation
+      // In production, this should be based on a price quote
+      const amountOutMinimum = '0'; // Accept any amount (POC - should use slippage calculation)
+
+      // Execute swap via GSwapClient
+      const swapResult = await this.gswapClient.executeSwap({
+        tokenIn,
+        tokenOut,
+        amountIn: amount,
+        amountOutMinimum,
+        feeTier,
+        walletAddress: wallet.address,
+        privateKey: wallet.privateKey,
+      });
+
+      // Build response
+      response.setTxHash(swapResult.txHash);
+      response.setAmountIn(swapResult.amountIn);
+      response.setAmountOut(swapResult.amountOut);
+      response.setFee(swapResult.fee);
+      response.setStatus(swapResult.status);
+      if (swapResult.errorMessage) {
+        response.setErrorMessage(swapResult.errorMessage);
+      }
+
+      console.log(
+        `Swap ${swapResult.status}: tx ${swapResult.txHash}, out: ${swapResult.amountOut}`
+      );
+
+      callback(null, response);
+    } catch (error) {
+      console.error('Error in executeSwap handler:', error);
+      response.setTxHash('');
+      response.setAmountIn('0.0');
+      response.setAmountOut('0.0');
+      response.setFee('0.0');
+      response.setStatus('failed');
+      response.setErrorMessage(
+        error instanceof Error ? error.message : 'Unknown error'
+      );
+      callback(null, response);
+    }
   }
 
   /**
