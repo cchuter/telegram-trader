@@ -3002,13 +3002,13 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 71: Create deployment documentation
 
 **Do:**
-- [ ] Create `docs/DEPLOYMENT.md`
-- [ ] Document docker-compose deployment for local/staging
-- [ ] Document environment variable configuration
-- [ ] Document database setup and migrations
-- [ ] Document backup and restore procedures
-- [ ] Add troubleshooting section
-- [ ] Document monitoring and health checks
+- [x] Create `docs/DEPLOYMENT.md`
+- [x] Document docker-compose deployment for local/staging
+- [x] Document environment variable configuration
+- [x] Document database setup and migrations
+- [x] Document backup and restore procedures
+- [x] Add troubleshooting section
+- [x] Document monitoring and health checks
 
 **Files:**
 - `docs/DEPLOYMENT.md` - create deployment guide
