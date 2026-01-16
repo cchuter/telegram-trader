@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/cchuter/telegram-trader/internal/blockchain/ton"
 	"github.com/cchuter/telegram-trader/internal/bot"
 	"github.com/cchuter/telegram-trader/internal/config"
 	"github.com/cchuter/telegram-trader/internal/dex/stonfi"
@@ -54,6 +55,16 @@ func main() {
 		"log_dir": "./logs",
 	})
 
+	// Initialize TON blockchain client
+	tonClient := ton.NewClient()
+	if err := tonClient.Connect(context.Background()); err != nil {
+		log.Fatalf("Failed to connect to TON blockchain: %v", err)
+	}
+	defer tonClient.Close()
+
+	logger.Info("TON blockchain client initialized", nil)
+	log.Println("TON blockchain client initialized successfully")
+
 	// Initialize DEX client (ston.fi)
 	dexClient := stonfi.NewClient()
 	defer dexClient.Close()
@@ -87,6 +98,19 @@ func main() {
 		logger.Info("GALACHAIN_SERVICE_URL not set, continuing without GalaChain service", nil)
 		log.Println("GALACHAIN_SERVICE_URL not set, continuing without GalaChain service")
 	}
+
+	// Initialize health checker
+	healthChecker := bot.NewHealthChecker(db, tonClient, galaClient)
+
+	// Start health check HTTP server in a goroutine
+	go func() {
+		logger.Info("Starting health check server on port 8080", nil)
+		log.Println("Health check server starting on port 8080")
+		if err := healthChecker.StartHealthServer("8080"); err != nil {
+			logger.LogError(ctx, 0, "system", err, "Health check server failed", nil)
+			log.Printf("Health check server error: %v", err)
+		}
+	}()
 
 	// Create and start the bot
 	b, err := bot.New(cfg.BotToken, db, cfg.BotAdminUserIDs, cfg.EncryptionKey, dexClient, galaClient, logger, tradeLogger)

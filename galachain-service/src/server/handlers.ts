@@ -269,23 +269,58 @@ export class GrpcHandlers {
   /**
    * HealthCheck handler - returns service health status
    */
-  public healthCheck(
+  public async healthCheck(
     _call: grpc.ServerUnaryCall<messages.HealthCheckRequest, messages.HealthCheckResponse>,
     callback: grpc.sendUnaryData<messages.HealthCheckResponse>,
     startTime: Date
-  ): void {
+  ): Promise<void> {
     console.log('HealthCheck called');
 
     const response = new messages.HealthCheckResponse();
-    response.setStatus('healthy');
 
-    const dependencies = response.getDependenciesMap();
-    dependencies.set('galachain', 'connected');
-    dependencies.set('database', 'connected');
+    try {
+      // Check gswap API connectivity
+      const gswapHealthy = await this.checkGswapAPIHealth();
 
-    const uptimeSeconds = Math.floor((Date.now() - startTime.getTime()) / 1000);
-    response.setUptimeSeconds(uptimeSeconds);
+      // Set overall status based on dependencies
+      if (gswapHealthy) {
+        response.setStatus('healthy');
+      } else {
+        response.setStatus('degraded');
+      }
 
-    callback(null, response);
+      // Set dependencies status
+      const dependencies = response.getDependenciesMap();
+      dependencies.set('gswap_api', gswapHealthy ? 'connected' : 'disconnected');
+      dependencies.set('database', 'not_configured'); // POC - no database yet
+
+      // Calculate uptime
+      const uptimeSeconds = Math.floor((Date.now() - startTime.getTime()) / 1000);
+      response.setUptimeSeconds(uptimeSeconds);
+
+      callback(null, response);
+    } catch (error) {
+      console.error('Health check error:', error);
+      response.setStatus('unhealthy');
+      const dependencies = response.getDependenciesMap();
+      dependencies.set('gswap_api', 'error');
+      dependencies.set('database', 'not_configured');
+      response.setUptimeSeconds(0);
+      callback(null, response);
+    }
+  }
+
+  /**
+   * Check gswap API health
+   */
+  private async checkGswapAPIHealth(): Promise<boolean> {
+    try {
+      // Try to fetch a price to test connectivity
+      await this.gswapClient.getPrice('GTON', 'GALA');
+      return true;
+    } catch (error) {
+      console.error('GSwap API health check failed:', error);
+      return false;
+    }
   }
 }

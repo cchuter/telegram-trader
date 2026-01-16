@@ -1656,12 +1656,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 40: Implement health checks for all services
 
 **Do:**
-- [ ] Add HealthCheck() method to bot service checking database, TON client, gRPC connection
-- [ ] Implement HealthCheck gRPC handler in GalaChain service
-- [ ] Check gswap API connectivity, database connection
-- [ ] Add /health HTTP endpoint to bot service (for monitoring)
-- [ ] Add /health HTTP endpoint to GalaChain service
-- [ ] Return status: healthy/degraded/unhealthy with dependency details
+- [x] Add HealthCheck() method to bot service checking database, TON client, gRPC connection
+- [x] Implement HealthCheck gRPC handler in GalaChain service
+- [x] Check gswap API connectivity, database connection
+- [x] Add /health HTTP endpoint to bot service (for monitoring)
+- [x] Add /health HTTP endpoint to GalaChain service
+- [x] Return status: healthy/degraded/unhealthy with dependency details
 
 **Files:**
 - `internal/bot/health.go` - create health check for bot
