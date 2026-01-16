@@ -444,11 +444,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 11: Implement TON blockchain client skeleton
 
 **Do:**
-- [ ] Add dependency: `go get github.com/xssnick/tonutils-go`
-- [ ] Create `internal/blockchain/ton/client.go` with Client struct
-- [ ] Implement Connect() method to initialize TON lite client
-- [ ] Implement GetBalance() method (returns hardcoded "10.0" for POC)
-- [ ] Create `internal/blockchain/interfaces.go` with Client interface
+- [x] Add dependency: `go get github.com/xssnick/tonutils-go`
+- [x] Create `internal/blockchain/ton/client.go` with Client struct
+- [x] Implement Connect() method to initialize TON lite client
+- [x] Implement GetBalance() method (returns hardcoded "10.0" for POC)
+- [x] Create `internal/blockchain/interfaces.go` with Client interface
 
 **Files:**
 - `internal/blockchain/interfaces.go` - create blockchain client interface
