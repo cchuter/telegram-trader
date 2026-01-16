@@ -850,11 +850,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 21: Implement basic arbitrage detection logic
 
 **Do:**
-- [ ] Create `internal/arbitrage/engine.go` with Engine struct
-- [ ] Implement DetectOpportunity() method that checks spread between prices
-- [ ] Return Opportunity struct if spread >= 0.3% (hardcoded threshold for POC)
-- [ ] Calculate buy/sell direction (buy on cheaper, sell on expensive)
-- [ ] Don't implement execution yet
+- [x] Create `internal/arbitrage/engine.go` with Engine struct
+- [x] Implement DetectOpportunity() method that checks spread between prices
+- [x] Return Opportunity struct if spread >= 0.3% (hardcoded threshold for POC)
+- [x] Calculate buy/sell direction (buy on cheaper, sell on expensive)
+- [x] Don't implement execution yet
 
 **Files:**
 - `internal/arbitrage/engine.go` - create arbitrage engine
