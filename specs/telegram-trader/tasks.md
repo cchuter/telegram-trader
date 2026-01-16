@@ -2484,13 +2484,13 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 59: Add integration test for database operations
 
 **Do:**
-- [ ] Create `test/integration/database_test.go`
-- [ ] Test with real SQLite database (temp file)
-- [ ] Test user session CRUD operations
-- [ ] Test wallet session CRUD operations
-- [ ] Test trade history logging
-- [ ] Test concurrent writes (goroutines)
-- [ ] Clean up temp database after test
+- [x] Create `test/integration/database_test.go`
+- [x] Test with real SQLite database (temp file)
+- [x] Test user session CRUD operations
+- [x] Test wallet session CRUD operations
+- [x] Test trade history logging
+- [x] Test concurrent writes (goroutines)
+- [x] Clean up temp database after test
 
 **Files:**
 - `test/integration/database_test.go` - create database integration test
