@@ -2311,12 +2311,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 55: Add unit tests for command handlers
 
 **Do:**
-- [ ] Create test files for each handler: start_test.go, balance_test.go, swap_test.go, etc.
-- [ ] Use mock bot API, mock clients
-- [ ] Test happy path for each command
-- [ ] Test error cases (wallet not connected, insufficient balance, etc.)
-- [ ] Test response formatting
-- [ ] Aim for 80% coverage of handlers package
+- [x] Create test files for each handler: start_test.go, balance_test.go, swap_test.go, etc.
+- [x] Use mock bot API, mock clients
+- [x] Test happy path for each command
+- [x] Test error cases (wallet not connected, insufficient balance, etc.)
+- [x] Test response formatting
+- [x] Aim for 80% coverage of handlers package
 
 **Files:**
 - `internal/bot/handlers/*_test.go` - create handler tests
