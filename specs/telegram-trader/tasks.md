@@ -1438,12 +1438,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 35: Implement position sizing calculator for arbitrage
 
 **Do:**
-- [ ] Create `internal/arbitrage/calculator.go` with position sizing logic
-- [ ] Implement CalculatePositionSize() that uses 50% of balance
-- [ ] Check minimum balances (1 TON, 10 GALA)
-- [ ] Apply 1.5x safety margin above minimums
-- [ ] Calculate exact amounts for both legs of arbitrage
-- [ ] Update arbitrage engine to use calculator
+- [x] Create `internal/arbitrage/calculator.go` with position sizing logic
+- [x] Implement CalculatePositionSize() that uses 50% of balance
+- [x] Check minimum balances (1 TON, 10 GALA)
+- [x] Apply 1.5x safety margin above minimums
+- [x] Calculate exact amounts for both legs of arbitrage
+- [x] Update arbitrage engine to use calculator
 
 **Files:**
 - `internal/arbitrage/calculator.go` - create position size calculator

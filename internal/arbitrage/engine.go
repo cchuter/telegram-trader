@@ -27,6 +27,7 @@ type GalaClient interface {
 type Engine struct {
 	dexClient  dex.Client
 	galaClient GalaClient
+	calculator *Calculator
 }
 
 // NewEngine creates a new arbitrage engine
@@ -34,6 +35,7 @@ func NewEngine(dexClient dex.Client, galaClient GalaClient) *Engine {
 	return &Engine{
 		dexClient:  dexClient,
 		galaClient: galaClient,
+		calculator: NewCalculator(),
 	}
 }
 
@@ -120,4 +122,10 @@ func (e *Engine) getGswapPrice(ctx context.Context) (float64, error) {
 	}
 
 	return price, nil
+}
+
+// GetPositionSize calculates the position size for an arbitrage opportunity
+// It ensures minimum balances are maintained with safety margins
+func (e *Engine) GetPositionSize(tonBalance, galaBalance float64, direction Direction) *PositionSize {
+	return e.calculator.CalculatePositionSize(tonBalance, galaBalance, direction)
 }
