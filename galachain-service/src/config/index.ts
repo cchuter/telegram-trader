@@ -8,6 +8,7 @@ export interface Config {
   DATABASE_URL: string;
   ENCRYPTION_KEY: string;
   GSWAP_API_URL: string;
+  WALLETCONNECT_PROJECT_ID: string;
 }
 
 export function loadConfig(): Config {
@@ -15,6 +16,7 @@ export function loadConfig(): Config {
   const databaseUrl = process.env.DATABASE_URL;
   const encryptionKey = process.env.ENCRYPTION_KEY;
   const gswapApiUrl = process.env.GSWAP_API_URL;
+  const walletConnectProjectId = process.env.WALLETCONNECT_PROJECT_ID;
 
   // Validate required environment variables
   if (!grpcPort) {
@@ -29,6 +31,9 @@ export function loadConfig(): Config {
   if (!gswapApiUrl) {
     throw new Error('GSWAP_API_URL environment variable is required');
   }
+  if (!walletConnectProjectId) {
+    throw new Error('WALLETCONNECT_PROJECT_ID environment variable is required');
+  }
 
   const port = parseInt(grpcPort, 10);
   if (isNaN(port)) {
@@ -40,5 +45,6 @@ export function loadConfig(): Config {
     DATABASE_URL: databaseUrl,
     ENCRYPTION_KEY: encryptionKey,
     GSWAP_API_URL: gswapApiUrl,
+    WALLETCONNECT_PROJECT_ID: walletConnectProjectId,
   };
 }

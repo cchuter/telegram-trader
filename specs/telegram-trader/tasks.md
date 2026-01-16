@@ -1262,12 +1262,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 31: Implement WalletConnect for Gala wallet
 
 **Do:**
-- [ ] Install WalletConnect: `npm install @walletconnect/client`
-- [ ] Update `galachain-service/src/wallet/walletconnect.ts` with WalletConnect v2
-- [ ] Generate WalletConnect session URI with QR code
-- [ ] Implement CreateWalletSession gRPC handler properly
-- [ ] Listen for wallet approval events
-- [ ] Add manual private key fallback (from POC)
+- [x] Install WalletConnect: `npm install @walletconnect/client`
+- [x] Update `galachain-service/src/wallet/walletconnect.ts` with WalletConnect v2
+- [x] Generate WalletConnect session URI with QR code
+- [x] Implement CreateWalletSession gRPC handler properly
+- [x] Listen for wallet approval events
+- [x] Add manual private key fallback (from POC)
 
 **Files:**
 - `galachain-service/src/wallet/walletconnect.ts` - implement WalletConnect

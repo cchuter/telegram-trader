@@ -19,11 +19,16 @@
     "@grpc/proto-loader": "^0.8.0",
     "@types/dotenv": "^6.1.1",
     "@types/node": "^25.0.9",
+    "@walletconnect/core": "^2.23.3",
+    "@walletconnect/sign-client": "^2.23.3",
+    "@walletconnect/utils": "^2.23.3",
     "dotenv": "^17.2.3",
+    "qrcode-terminal": "^0.12.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
   "devDependencies": {
+    "@types/qrcode-terminal": "^0.12.2",
     "grpc_tools_node_protoc_ts": "^5.3.3",
     "grpc-tools": "^1.13.1"
   }

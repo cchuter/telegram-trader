@@ -1,6 +1,7 @@
 import * as grpc from '@grpc/grpc-js';
 import * as messages from '../types/galachain_pb';
 import { GSwapClient } from '../gswap/client';
+import { WalletConnectManager, ManualWalletManager } from '../wallet/walletconnect';
 
 /**
  * GrpcHandlers class implements the business logic for all gRPC service methods.
@@ -8,9 +9,13 @@ import { GSwapClient } from '../gswap/client';
  */
 export class GrpcHandlers {
   private gswapClient: GSwapClient;
+  private walletConnectManager: WalletConnectManager;
+  private manualWalletManager: ManualWalletManager;
 
-  constructor(gswapApiUrl: string) {
+  constructor(gswapApiUrl: string, walletConnectProjectId: string) {
     this.gswapClient = new GSwapClient(gswapApiUrl);
+    this.walletConnectManager = new WalletConnectManager(walletConnectProjectId);
+    this.manualWalletManager = new ManualWalletManager();
   }
   /**
    * GetBalance handler - returns wallet balances for a user
@@ -130,21 +135,71 @@ export class GrpcHandlers {
 
   /**
    * CreateWalletSession handler - creates wallet connection session
-   * TODO: Implement actual wallet session creation logic
+   * Supports both WalletConnect and manual private key input
    */
-  public createWalletSession(
+  public async createWalletSession(
     call: grpc.ServerUnaryCall<messages.WalletSessionRequest, messages.WalletSessionResponse>,
     callback: grpc.sendUnaryData<messages.WalletSessionResponse>
-  ): void {
-    console.log(`CreateWalletSession called for user: ${call.request.getUserId()}`);
+  ): Promise<void> {
+    const userId = call.request.getUserId();
+    const method = call.request.getMethod();
+
+    console.log(`CreateWalletSession called for user: ${userId}, method: ${method}`);
 
     const response = new messages.WalletSessionResponse();
-    response.setSessionId('');
-    response.setMethod(call.request.getMethod());
-    response.setSuccess(false);
-    response.setErrorMessage('Not implemented');
+    response.setMethod(method);
 
-    callback(null, response);
+    try {
+      if (method === 'walletconnect') {
+        // WalletConnect method
+        const session = await this.walletConnectManager.createSession(userId);
+
+        response.setSessionId(session.sessionId);
+        response.setQrCodeUri(session.uri);
+        response.setDeepLink(session.deepLink);
+        response.setSuccess(true);
+
+        console.log(`WalletConnect session created for user ${userId}`);
+      } else if (method === 'manual') {
+        // Manual private key method
+        const privateKey = call.request.getPrivateKey();
+        const publicKey = call.request.getPublicKey();
+        const address = call.request.getAddress();
+
+        if (!privateKey || !publicKey || !address) {
+          response.setSuccess(false);
+          response.setErrorMessage('Private key, public key, and address are required for manual method');
+          callback(null, response);
+          return;
+        }
+
+        // Store the manual wallet (in production, encrypt the private key!)
+        const wallet = this.manualWalletManager.storeWallet(
+          userId,
+          privateKey,
+          publicKey,
+          address
+        );
+
+        response.setSessionId(`manual_${userId}`);
+        response.setAddress(wallet.address);
+        response.setSuccess(true);
+
+        console.log(`Manual wallet stored for user ${userId}`);
+      } else {
+        response.setSuccess(false);
+        response.setErrorMessage(`Unknown method: ${method}. Use "walletconnect" or "manual"`);
+        callback(null, response);
+        return;
+      }
+
+      callback(null, response);
+    } catch (error) {
+      console.error('Error in createWalletSession handler:', error);
+      response.setSuccess(false);
+      response.setErrorMessage(error instanceof Error ? error.message : 'Unknown error');
+      callback(null, response);
+    }
   }
 
   /**

@@ -8,11 +8,11 @@ export class GalaChainGrpcServer {
   private startTime: Date;
   private handlers: GrpcHandlers;
 
-  constructor(port: number = 50051, gswapApiUrl: string) {
+  constructor(port: number = 50051, gswapApiUrl: string, walletConnectProjectId: string) {
     this.server = new grpc.Server();
     this.port = port;
     this.startTime = new Date();
-    this.handlers = new GrpcHandlers(gswapApiUrl);
+    this.handlers = new GrpcHandlers(gswapApiUrl, walletConnectProjectId);
     this.setupHandlers();
   }
 
