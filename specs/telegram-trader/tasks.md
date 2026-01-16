@@ -2959,12 +2959,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 70: Add security scanning with Snyk
 
 **Do:**
-- [ ] Create `.github/workflows/security.yml`
-- [ ] Add Snyk scanning for Go dependencies
-- [ ] Add Snyk scanning for npm dependencies
-- [ ] Run on: schedule (weekly), push to main
-- [ ] Fail on high/critical vulnerabilities
-- [ ] Add security badge to README
+- [x] Create `.github/workflows/security.yml`
+- [x] Add Snyk scanning for Go dependencies
+- [x] Add Snyk scanning for npm dependencies
+- [x] Run on: schedule (weekly), push to main
+- [x] Fail on high/critical vulnerabilities
+- [x] Add security badge to README
 
 **Files:**
 - `.github/workflows/security.yml` - create security workflow

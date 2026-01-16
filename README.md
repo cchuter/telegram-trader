@@ -1,6 +1,7 @@
 # Telegram Trader
 
 [![CI](https://github.com/YOUR_USERNAME/telegram-trader/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/telegram-trader/actions/workflows/ci.yml)
+[![Security](https://github.com/YOUR_USERNAME/telegram-trader/actions/workflows/security.yml/badge.svg)](https://github.com/YOUR_USERNAME/telegram-trader/actions/workflows/security.yml)
 [![codecov](https://codecov.io/gh/YOUR_USERNAME/telegram-trader/branch/main/graph/badge.svg)](https://codecov.io/gh/YOUR_USERNAME/telegram-trader)
 
 A Telegram bot for trading tokens on GalaChain (GSwap) and TON blockchain (ston.fi). Execute trades, check prices, and detect arbitrage opportunities across chains.
