@@ -649,10 +649,10 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 16: Implement GalaChain gRPC GetBalance handler
 
 **Do:**
-- [ ] Create `galachain-service/src/server/handlers.ts` with GrpcHandlers class
-- [ ] Implement getBalance() method that returns hardcoded balance for POC
-- [ ] Wire handler into gRPC server in grpc.ts
-- [ ] Return mock data: GALA: "5000.0", GTON: "2.5"
+- [x] Create `galachain-service/src/server/handlers.ts` with GrpcHandlers class
+- [x] Implement getBalance() method that returns hardcoded balance for POC
+- [x] Wire handler into gRPC server in grpc.ts
+- [x] Return mock data: GALA: "5000.0", GTON: "2.5"
 
 **Files:**
 - `galachain-service/src/server/handlers.ts` - create gRPC handlers
