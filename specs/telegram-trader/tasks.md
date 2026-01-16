@@ -1874,12 +1874,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 45: Refactor configuration to use YAML files
 
 **Do:**
-- [ ] Create `configs/bot-service.yaml` with config from design.md
-- [ ] Create `configs/galachain-service.yaml` for TypeScript service
-- [ ] Install viper: `go get github.com/spf13/viper`
-- [ ] Update config loader to read YAML files
-- [ ] Keep environment variables for secrets (BOT_TOKEN, ENCRYPTION_KEY)
-- [ ] Support environment variable overrides of YAML values
+- [x] Create `configs/bot-service.yaml` with config from design.md
+- [x] Create `configs/galachain-service.yaml` for TypeScript service
+- [x] Install viper: `go get github.com/spf13/viper`
+- [x] Update config loader to read YAML files
+- [x] Keep environment variables for secrets (BOT_TOKEN, ENCRYPTION_KEY)
+- [x] Support environment variable overrides of YAML values
 
 **Files:**
 - `configs/bot-service.yaml` - create bot config file
