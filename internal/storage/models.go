@@ -9,6 +9,7 @@ type UserSession struct {
 	Username  string    `json:"username"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	ExpiresAt time.Time `json:"expires_at"` // Session expires 24 hours after last activity
 }
 
 // WalletSession represents a connected wallet session

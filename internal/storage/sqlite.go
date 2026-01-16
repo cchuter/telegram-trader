@@ -77,7 +77,7 @@ func runMigrations(db *sql.DB) error {
 // GetUserSession retrieves a user session by user ID
 func (s *SQLiteDB) GetUserSession(ctx context.Context, userID int64) (*UserSession, error) {
 	query := `
-		SELECT user_id, chat_id, username, created_at, updated_at
+		SELECT user_id, chat_id, username, created_at, updated_at, expires_at
 		FROM user_sessions
 		WHERE user_id = ?
 	`
@@ -89,6 +89,7 @@ func (s *SQLiteDB) GetUserSession(ctx context.Context, userID int64) (*UserSessi
 		&session.Username,
 		&session.CreatedAt,
 		&session.UpdatedAt,
+		&session.ExpiresAt,
 	)
 
 	if err == sql.ErrNoRows {
@@ -104,12 +105,13 @@ func (s *SQLiteDB) GetUserSession(ctx context.Context, userID int64) (*UserSessi
 // SaveUserSession saves or updates a user session
 func (s *SQLiteDB) SaveUserSession(ctx context.Context, session *UserSession) error {
 	query := `
-		INSERT INTO user_sessions (user_id, chat_id, username, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?)
+		INSERT INTO user_sessions (user_id, chat_id, username, created_at, updated_at, expires_at)
+		VALUES (?, ?, ?, ?, ?, ?)
 		ON CONFLICT(user_id) DO UPDATE SET
 			chat_id = excluded.chat_id,
 			username = excluded.username,
-			updated_at = excluded.updated_at
+			updated_at = excluded.updated_at,
+			expires_at = excluded.expires_at
 	`
 
 	now := time.Now()
@@ -117,6 +119,9 @@ func (s *SQLiteDB) SaveUserSession(ctx context.Context, session *UserSession) er
 		session.CreatedAt = now
 	}
 	session.UpdatedAt = now
+	if session.ExpiresAt.IsZero() {
+		session.ExpiresAt = now.Add(24 * time.Hour)
+	}
 
 	_, err := s.db.ExecContext(ctx, query,
 		session.UserID,
@@ -124,6 +129,7 @@ func (s *SQLiteDB) SaveUserSession(ctx context.Context, session *UserSession) er
 		session.Username,
 		session.CreatedAt,
 		session.UpdatedAt,
+		session.ExpiresAt,
 	)
 
 	if err != nil {

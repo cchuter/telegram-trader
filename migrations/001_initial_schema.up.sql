@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS user_sessions (
     chat_id INTEGER NOT NULL,
     username TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL DEFAULT (datetime(CURRENT_TIMESTAMP, '+24 hours'))
 );
 
 -- Wallet sessions table

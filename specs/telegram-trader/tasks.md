@@ -1919,11 +1919,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 46: Implement session expiry and renewal
 
 **Do:**
-- [ ] Update SessionManager to check session expiry (24 hours)
-- [ ] Implement sliding window: renew expiry on each command
-- [ ] Set session.ExpiresAt = now + 24h on each authenticated request
-- [ ] Return session expired error if session > 24h old
-- [ ] Require /start to create new session after expiry
+- [x] Update SessionManager to check session expiry (24 hours)
+- [x] Implement sliding window: renew expiry on each command
+- [x] Set session.ExpiresAt = now + 24h on each authenticated request
+- [x] Return session expired error if session > 24h old
+- [x] Require /start to create new session after expiry
 
 **Files:**
 - `internal/bot/middleware/auth.go` - update session checking

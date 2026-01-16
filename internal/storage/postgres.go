@@ -68,7 +68,8 @@ func runPostgresMigrations(db *sql.DB) error {
 				chat_id BIGINT NOT NULL,
 				username TEXT NOT NULL,
 				created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-				updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+				updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				expires_at TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '24 hours')
 			);
 
 			-- Wallet sessions table
@@ -102,6 +103,18 @@ func runPostgresMigrations(db *sql.DB) error {
 			ADD COLUMN IF NOT EXISTS tonconnect_client_id TEXT,
 			ADD COLUMN IF NOT EXISTS tonconnect_private_key TEXT,
 			ADD COLUMN IF NOT EXISTS tonconnect_wallet_id TEXT;
+		`)
+		return err
+	}); err != nil {
+		return err
+	}
+
+	// Migration 3: Session expiry
+	if err := applyMigration(db, 3, func(tx *sql.Tx) error {
+		_, err := tx.Exec(`
+			-- Add expires_at field to user_sessions table
+			ALTER TABLE user_sessions
+			ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '24 hours');
 		`)
 		return err
 	}); err != nil {
@@ -153,7 +166,7 @@ func applyMigration(db *sql.DB, version int, migrationFunc func(*sql.Tx) error) 
 // GetUserSession retrieves a user session by user ID
 func (p *PostgresDB) GetUserSession(ctx context.Context, userID int64) (*UserSession, error) {
 	query := `
-		SELECT user_id, chat_id, username, created_at, updated_at
+		SELECT user_id, chat_id, username, created_at, updated_at, expires_at
 		FROM user_sessions
 		WHERE user_id = $1
 	`
@@ -165,6 +178,7 @@ func (p *PostgresDB) GetUserSession(ctx context.Context, userID int64) (*UserSes
 		&session.Username,
 		&session.CreatedAt,
 		&session.UpdatedAt,
+		&session.ExpiresAt,
 	)
 
 	if err == sql.ErrNoRows {
@@ -180,12 +194,13 @@ func (p *PostgresDB) GetUserSession(ctx context.Context, userID int64) (*UserSes
 // SaveUserSession saves or updates a user session
 func (p *PostgresDB) SaveUserSession(ctx context.Context, session *UserSession) error {
 	query := `
-		INSERT INTO user_sessions (user_id, chat_id, username, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO user_sessions (user_id, chat_id, username, created_at, updated_at, expires_at)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT(user_id) DO UPDATE SET
 			chat_id = EXCLUDED.chat_id,
 			username = EXCLUDED.username,
-			updated_at = EXCLUDED.updated_at
+			updated_at = EXCLUDED.updated_at,
+			expires_at = EXCLUDED.expires_at
 	`
 
 	now := time.Now()
@@ -193,6 +208,9 @@ func (p *PostgresDB) SaveUserSession(ctx context.Context, session *UserSession) 
 		session.CreatedAt = now
 	}
 	session.UpdatedAt = now
+	if session.ExpiresAt.IsZero() {
+		session.ExpiresAt = now.Add(24 * time.Hour)
+	}
 
 	_, err := p.db.ExecContext(ctx, query,
 		session.UserID,
@@ -200,6 +218,7 @@ func (p *PostgresDB) SaveUserSession(ctx context.Context, session *UserSession) 
 		session.Username,
 		session.CreatedAt,
 		session.UpdatedAt,
+		session.ExpiresAt,
 	)
 
 	if err != nil {

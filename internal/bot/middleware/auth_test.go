@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/cchuter/telegram-trader/internal/storage"
 	"github.com/go-telegram/bot/models"
@@ -182,6 +183,8 @@ func TestAuthenticate(t *testing.T) {
 					t.Error("Expected user session to be created, but it wasn't")
 				} else if session.UserID != tt.userID {
 					t.Errorf("Session UserID = %d, want %d", session.UserID, tt.userID)
+				} else if session.ExpiresAt.IsZero() {
+					t.Error("Expected ExpiresAt to be set, but it was zero")
 				}
 			}
 		})
@@ -211,4 +214,180 @@ func TestNewAuthMiddleware(t *testing.T) {
 			t.Errorf("Unexpected ID in whitelist: %d", id)
 		}
 	}
+}
+
+func TestSessionExpiry(t *testing.T) {
+	db := newMockDatabase()
+	middleware := NewAuthMiddleware(db, "123456")
+	ctx := context.Background()
+
+	tests := []struct {
+		name        string
+		setupFunc   func()
+		userID      int64
+		shouldErr   bool
+		errContains string
+	}{
+		{
+			name: "expired session blocks access",
+			setupFunc: func() {
+				// Create an expired session
+				expiredSession := &storage.UserSession{
+					UserID:    123456,
+					ChatID:    123,
+					Username:  "testuser",
+					ExpiresAt: time.Now().Add(-1 * time.Hour), // Expired 1 hour ago
+				}
+				db.SaveUserSession(ctx, expiredSession)
+			},
+			userID:      123456,
+			shouldErr:   true,
+			errContains: "session expired",
+		},
+		{
+			name: "valid session allows access",
+			setupFunc: func() {
+				// Create a valid session
+				validSession := &storage.UserSession{
+					UserID:    123456,
+					ChatID:    123,
+					Username:  "testuser",
+					ExpiresAt: time.Now().Add(12 * time.Hour), // Valid for 12 more hours
+				}
+				db.SaveUserSession(ctx, validSession)
+			},
+			userID:    123456,
+			shouldErr: false,
+		},
+		{
+			name: "new user creates session with expiry",
+			setupFunc: func() {
+				// Clean up any existing session
+				delete(db.sessions, int64(123456))
+			},
+			userID:    123456,
+			shouldErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			if tt.setupFunc != nil {
+				tt.setupFunc()
+			}
+
+			// Create update
+			update := &models.Update{
+				Message: &models.Message{
+					From: &models.User{
+						ID:       tt.userID,
+						Username: "testuser",
+					},
+					Chat: models.Chat{
+						ID: 123,
+					},
+				},
+			}
+
+			// Authenticate
+			err := middleware.Authenticate(ctx, nil, update)
+
+			// Verify error expectation
+			if (err != nil) != tt.shouldErr {
+				t.Errorf("Authenticate() error = %v, shouldErr %v", err, tt.shouldErr)
+				return
+			}
+
+			if tt.errContains != "" && err != nil {
+				if !contains(err.Error(), tt.errContains) {
+					t.Errorf("Error message %q does not contain %q", err.Error(), tt.errContains)
+				}
+			}
+
+			// If no error, verify session was renewed
+			if !tt.shouldErr {
+				session, _ := db.GetUserSession(ctx, tt.userID)
+				if session == nil {
+					t.Error("Expected session to exist")
+				} else {
+					// Verify expiry is set and in the future
+					if session.ExpiresAt.IsZero() {
+						t.Error("Expected ExpiresAt to be set")
+					} else if session.ExpiresAt.Before(time.Now()) {
+						t.Error("Expected ExpiresAt to be in the future")
+					}
+					// Verify expiry is approximately 24 hours from now (within 1 minute tolerance)
+					expectedExpiry := time.Now().Add(24 * time.Hour)
+					diff := session.ExpiresAt.Sub(expectedExpiry)
+					if diff < -1*time.Minute || diff > 1*time.Minute {
+						t.Errorf("ExpiresAt = %v, want approximately %v (diff: %v)", session.ExpiresAt, expectedExpiry, diff)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestSessionRenewal(t *testing.T) {
+	db := newMockDatabase()
+	middleware := NewAuthMiddleware(db, "123456")
+	ctx := context.Background()
+
+	// Create initial session
+	initialExpiry := time.Now().Add(12 * time.Hour)
+	initialSession := &storage.UserSession{
+		UserID:    123456,
+		ChatID:    123,
+		Username:  "testuser",
+		ExpiresAt: initialExpiry,
+	}
+	db.SaveUserSession(ctx, initialSession)
+
+	// Simulate time passing
+	time.Sleep(10 * time.Millisecond)
+
+	// Authenticate again (should renew)
+	update := &models.Update{
+		Message: &models.Message{
+			From: &models.User{
+				ID:       123456,
+				Username: "testuser",
+			},
+			Chat: models.Chat{
+				ID: 123,
+			},
+		},
+	}
+
+	err := middleware.Authenticate(ctx, nil, update)
+	if err != nil {
+		t.Errorf("Authenticate() unexpected error: %v", err)
+	}
+
+	// Verify session was renewed
+	renewedSession, _ := db.GetUserSession(ctx, 123456)
+	if renewedSession == nil {
+		t.Fatal("Expected session to exist")
+	}
+
+	// The renewed expiry should be later than the initial expiry
+	if !renewedSession.ExpiresAt.After(initialExpiry) {
+		t.Errorf("Expected ExpiresAt to be renewed (initial: %v, renewed: %v)", initialExpiry, renewedSession.ExpiresAt)
+	}
+}
+
+// Helper function to check if a string contains a substring
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
+		(len(s) > 0 && len(substr) > 0 && findSubstring(s, substr)))
+}
+
+func findSubstring(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
 }

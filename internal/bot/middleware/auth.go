@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/cchuter/telegram-trader/internal/storage"
 	"github.com/go-telegram/bot"
@@ -82,11 +83,32 @@ func (m *AuthMiddleware) Authenticate(ctx context.Context, b *bot.Bot, update *m
 		return fmt.Errorf("user %d is not whitelisted", userID)
 	}
 
-	// Create or update user session
+	// Check existing session for expiry
+	existingSession, err := m.db.GetUserSession(ctx, userID)
+	if err == nil && existingSession != nil {
+		// Session exists - check if expired
+		if !existingSession.ExpiresAt.IsZero() && existingSession.ExpiresAt.Before(time.Now()) {
+			// Session expired
+			if b != nil {
+				_, err := b.SendMessage(ctx, &bot.SendMessageParams{
+					ChatID: chatID,
+					Text:   "Your session has expired. Please use /start to begin a new session.",
+				})
+				if err != nil {
+					log.Printf("Error sending session expired message: %v", err)
+				}
+			}
+			return fmt.Errorf("session expired for user %d", userID)
+		}
+	}
+
+	// Create or update user session with renewed expiry (sliding window)
+	now := time.Now()
 	session := &storage.UserSession{
-		UserID:   userID,
-		ChatID:   chatID,
-		Username: username,
+		UserID:    userID,
+		ChatID:    chatID,
+		Username:  username,
+		ExpiresAt: now.Add(24 * time.Hour), // Renew for 24 hours from now
 	}
 
 	if err := m.db.SaveUserSession(ctx, session); err != nil {
