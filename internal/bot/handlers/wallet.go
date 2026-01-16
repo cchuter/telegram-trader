@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
+	"time"
 
 	"github.com/cchuter/telegram-trader/internal/errors"
 	"github.com/cchuter/telegram-trader/internal/logging"
@@ -15,29 +15,29 @@ import (
 
 // HandleWallet handles the /wallet command
 func HandleWallet(ctx context.Context, b *bot.Bot, update *models.Update, walletManager *wallet.Manager, logger *logging.Logger) {
-	// Parse command arguments
-	messageText := update.Message.Text
-	parts := strings.Fields(messageText)
+	userID := update.Message.From.ID
 
-	// If no wallet address provided, show usage instructions
-	if len(parts) == 1 {
-		message := "Send wallet address using: /wallet <address>"
-		_, err := b.SendMessage(ctx, &bot.SendMessageParams{
+	// Check if wallet is already connected
+	existingWallet, err := walletManager.GetTonWallet(ctx, userID)
+	if err == nil && existingWallet != nil && existingWallet.IsActive {
+		// Wallet already connected
+		displayAddress := existingWallet.Address
+		if len(displayAddress) > 12 {
+			displayAddress = displayAddress[:6] + "..." + displayAddress[len(displayAddress)-3:]
+		}
+		message := fmt.Sprintf("TON wallet already connected: %s\n\nTo connect a different wallet, disconnect first.", displayAddress)
+		_, sendErr := b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
 			Text:   message,
 		})
-		if err != nil {
-			log.Printf("Error sending wallet usage message: %v", err)
+		if sendErr != nil {
+			log.Printf("Error sending wallet status message: %v", sendErr)
 		}
 		return
 	}
 
-	// Extract wallet address
-	walletAddress := parts[1]
-
-	// Connect wallet
-	userID := update.Message.From.ID
-	err := walletManager.ConnectTonWallet(ctx, userID, walletAddress)
+	// Initiate TonConnect session
+	session, qrURL, tonkeeperURL, err := walletManager.InitiateTonConnect(ctx, userID)
 	if err != nil {
 		// Create user-friendly error message
 		botErr := errors.ErrWalletTimeout(err)
@@ -49,34 +49,78 @@ func HandleWallet(ctx context.Context, b *bot.Bot, update *models.Update, wallet
 			logger.LogError(ctx, userID, update.Message.From.Username, sendErr, "Error sending error message", nil)
 			log.Printf("Error sending error message: %v", sendErr)
 		}
-		logger.LogError(ctx, userID, update.Message.From.Username, err, "Wallet connection error", map[string]interface{}{
-			"wallet_address": logging.SanitizeAddress(walletAddress),
-		})
-		log.Printf("Wallet connection error: %v", botErr)
+		logger.LogError(ctx, userID, update.Message.From.Username, err, "TonConnect initiation error", nil)
+		log.Printf("TonConnect initiation error: %v", botErr)
 		return
 	}
 
-	// Send confirmation
-	// Truncate address for display: show first 6 and last 3 characters
-	displayAddress := walletAddress
-	if len(walletAddress) > 12 {
-		displayAddress = walletAddress[:6] + "..." + walletAddress[len(walletAddress)-3:]
-	}
+	// Send TonConnect instructions with links
+	message := fmt.Sprintf(`Connect your TON wallet using TonConnect:
 
-	confirmationMsg := fmt.Sprintf("TON wallet connected: %s", displayAddress)
+📱 Mobile: Open this link in your Telegram app
+%s
+
+💼 TonKeeper: Tap here to connect
+%s
+
+Waiting for wallet approval... (expires in 5 minutes)`, qrURL, tonkeeperURL)
+
 	_, err = b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
-		Text:   confirmationMsg,
+		Text:   message,
 	})
 	if err != nil {
-		logger.LogError(ctx, userID, update.Message.From.Username, err, "Error sending wallet confirmation message", nil)
-		log.Printf("Error sending wallet confirmation message: %v", err)
-	} else {
-		// Log successful wallet connection
-		logger.InfoContext(ctx, "Wallet connected successfully", map[string]interface{}{
-			"user_id":        userID,
-			"wallet_address": logging.SanitizeAddress(walletAddress),
-			"chain":          "ton",
-		})
+		logger.LogError(ctx, userID, update.Message.From.Username, err, "Error sending TonConnect message", nil)
+		log.Printf("Error sending TonConnect message: %v", err)
+		return
 	}
+
+	// Wait for connection in background (session has callback that saves to DB)
+	// Monitor for connection with timeout
+	go func() {
+		timeout := time.After(5 * time.Minute)
+		ticker := time.NewTicker(2 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-timeout:
+				// Timeout - stop listening
+				walletManager.StopTonConnect(userID)
+				_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+					ChatID: update.Message.Chat.ID,
+					Text:   "Wallet connection timeout. Please try /wallet again.",
+				})
+				logger.InfoContext(ctx, "TonConnect session timeout", map[string]interface{}{
+					"user_id": userID,
+				})
+				return
+
+			case <-ticker.C:
+				// Check if wallet connected
+				if session.IsConnected() {
+					address := session.GetWalletAddress()
+					displayAddress := address
+					if len(address) > 12 {
+						displayAddress = address[:6] + "..." + address[len(address)-3:]
+					}
+
+					_, _ = b.SendMessage(ctx, &bot.SendMessageParams{
+						ChatID: update.Message.Chat.ID,
+						Text:   fmt.Sprintf("✅ TON wallet connected: %s", displayAddress),
+					})
+
+					logger.InfoContext(ctx, "Wallet connected successfully via TonConnect", map[string]interface{}{
+						"user_id":        userID,
+						"wallet_address": logging.SanitizeAddress(address),
+						"chain":          "ton",
+					})
+
+					// Stop listening
+					walletManager.StopTonConnect(userID)
+					return
+				}
+			}
+		}
+	}()
 }

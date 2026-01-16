@@ -1219,12 +1219,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 30: Implement real TonConnect wallet connection protocol
 
 **Do:**
-- [ ] Install TonConnect SDK: `go get github.com/ton-connect/sdk-go`
-- [ ] Update `internal/wallet/tonconnect.go` to use real TonConnect protocol
-- [ ] Generate proper TonConnect session with QR code and deep link
-- [ ] Listen for wallet connection events from TonConnect bridge
-- [ ] Store wallet address after successful connection
-- [ ] Remove manual address input workaround
+- [x] Install TonConnect SDK: `go get github.com/ton-connect/sdk-go`
+- [x] Update `internal/wallet/tonconnect.go` to use real TonConnect protocol
+- [x] Generate proper TonConnect session with QR code and deep link
+- [x] Listen for wallet connection events from TonConnect bridge
+- [x] Store wallet address after successful connection
+- [x] Remove manual address input workaround
 
 **Files:**
 - `internal/wallet/tonconnect.go` - implement TonConnect protocol

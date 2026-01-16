@@ -15,6 +15,9 @@ import (
 //go:embed migrations/001_initial_schema.up.sql
 var initialSchemaMigration string
 
+//go:embed migrations/002_add_tonconnect_fields.up.sql
+var tonconnectFieldsMigration string
+
 // SQLiteDB implements the Database interface using SQLite
 type SQLiteDB struct {
 	db *sql.DB
@@ -56,9 +59,16 @@ func InitDB(dbPath string) (Database, error) {
 
 // runMigrations executes the SQL migration files
 func runMigrations(db *sql.DB) error {
-	// Execute embedded migration
-	if _, err := db.Exec(initialSchemaMigration); err != nil {
-		return fmt.Errorf("failed to execute migration: %w", err)
+	// Execute embedded migrations in order
+	migrations := []string{
+		initialSchemaMigration,
+		tonconnectFieldsMigration,
+	}
+
+	for i, migration := range migrations {
+		if _, err := db.Exec(migration); err != nil {
+			return fmt.Errorf("failed to execute migration %d: %w", i+1, err)
+		}
 	}
 
 	return nil
@@ -126,13 +136,15 @@ func (s *SQLiteDB) SaveUserSession(ctx context.Context, session *UserSession) er
 // GetWalletSession retrieves a wallet session by user ID and wallet type
 func (s *SQLiteDB) GetWalletSession(ctx context.Context, userID int64, walletType string) (*WalletSession, error) {
 	query := `
-		SELECT user_id, wallet_type, address, connected_at, updated_at, is_active
+		SELECT user_id, wallet_type, address, connected_at, updated_at, is_active,
+		       tonconnect_client_id, tonconnect_private_key, tonconnect_wallet_id
 		FROM wallet_sessions
 		WHERE user_id = ? AND wallet_type = ?
 	`
 
 	var session WalletSession
 	var isActive int
+	var clientID, privateKey, walletID sql.NullString
 	err := s.db.QueryRowContext(ctx, query, userID, walletType).Scan(
 		&session.UserID,
 		&session.WalletType,
@@ -140,6 +152,9 @@ func (s *SQLiteDB) GetWalletSession(ctx context.Context, userID int64, walletTyp
 		&session.ConnectedAt,
 		&session.UpdatedAt,
 		&isActive,
+		&clientID,
+		&privateKey,
+		&walletID,
 	)
 
 	if err == sql.ErrNoRows {
@@ -150,6 +165,15 @@ func (s *SQLiteDB) GetWalletSession(ctx context.Context, userID int64, walletTyp
 	}
 
 	session.IsActive = isActive == 1
+	if clientID.Valid {
+		session.TonConnectClientID = clientID.String
+	}
+	if privateKey.Valid {
+		session.TonConnectPrivateKey = privateKey.String
+	}
+	if walletID.Valid {
+		session.TonConnectWalletID = walletID.String
+	}
 
 	return &session, nil
 }
@@ -157,12 +181,16 @@ func (s *SQLiteDB) GetWalletSession(ctx context.Context, userID int64, walletTyp
 // SaveWalletSession saves or updates a wallet session
 func (s *SQLiteDB) SaveWalletSession(ctx context.Context, session *WalletSession) error {
 	query := `
-		INSERT INTO wallet_sessions (user_id, wallet_type, address, connected_at, updated_at, is_active)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO wallet_sessions (user_id, wallet_type, address, connected_at, updated_at, is_active,
+		                             tonconnect_client_id, tonconnect_private_key, tonconnect_wallet_id)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(user_id, wallet_type) DO UPDATE SET
 			address = excluded.address,
 			updated_at = excluded.updated_at,
-			is_active = excluded.is_active
+			is_active = excluded.is_active,
+			tonconnect_client_id = excluded.tonconnect_client_id,
+			tonconnect_private_key = excluded.tonconnect_private_key,
+			tonconnect_wallet_id = excluded.tonconnect_wallet_id
 	`
 
 	now := time.Now()
@@ -176,6 +204,18 @@ func (s *SQLiteDB) SaveWalletSession(ctx context.Context, session *WalletSession
 		isActive = 1
 	}
 
+	// Handle NULL values for optional TonConnect fields
+	var clientID, privateKey, walletID interface{}
+	if session.TonConnectClientID != "" {
+		clientID = session.TonConnectClientID
+	}
+	if session.TonConnectPrivateKey != "" {
+		privateKey = session.TonConnectPrivateKey
+	}
+	if session.TonConnectWalletID != "" {
+		walletID = session.TonConnectWalletID
+	}
+
 	_, err := s.db.ExecContext(ctx, query,
 		session.UserID,
 		session.WalletType,
@@ -183,6 +223,9 @@ func (s *SQLiteDB) SaveWalletSession(ctx context.Context, session *WalletSession
 		session.ConnectedAt,
 		session.UpdatedAt,
 		isActive,
+		clientID,
+		privateKey,
+		walletID,
 	)
 
 	if err != nil {

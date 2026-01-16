@@ -19,4 +19,9 @@ type WalletSession struct {
 	ConnectedAt time.Time `json:"connected_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 	IsActive    bool      `json:"is_active"`
+
+	// TonConnect session data (for TON wallets)
+	TonConnectClientID  string `json:"tonconnect_client_id,omitempty"`  // Client public key (hex)
+	TonConnectPrivateKey string `json:"tonconnect_private_key,omitempty"` // Encrypted client private key
+	TonConnectWalletID   string `json:"tonconnect_wallet_id,omitempty"`   // Wallet public key (hex)
 }
