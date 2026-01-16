@@ -31,8 +31,8 @@ func main() {
 		log.Fatal("ENCRYPTION_KEY environment variable is required")
 	}
 
-	// Initialize database
-	db, err := storage.InitDB(cfg.DatabaseURL)
+	// Initialize database (auto-detect SQLite vs PostgreSQL from URL)
+	db, err := storage.ParseDatabaseURL(cfg.DatabaseURL)
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}

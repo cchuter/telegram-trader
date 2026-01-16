@@ -242,3 +242,8 @@ func (s *SQLiteDB) Close() error {
 	}
 	return nil
 }
+
+// QueryContext executes a query that returns rows (exposed for migration script)
+func (s *SQLiteDB) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+	return s.db.QueryContext(ctx, query, args...)
+}

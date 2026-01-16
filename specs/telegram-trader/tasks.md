@@ -1700,12 +1700,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 41: Migrate from SQLite to PostgreSQL option
 
 **Do:**
-- [ ] Create `internal/storage/postgres.go` implementing Database interface
-- [ ] Use `github.com/lib/pq` driver for PostgreSQL
-- [ ] Keep SQLite implementation for local dev
-- [ ] Add DATABASE_URL parsing to detect SQLite vs PostgreSQL
-- [ ] Update docker-compose.yml to include PostgreSQL service
-- [ ] Create migration script to copy SQLite data to PostgreSQL
+- [x] Create `internal/storage/postgres.go` implementing Database interface
+- [x] Use `github.com/lib/pq` driver for PostgreSQL
+- [x] Keep SQLite implementation for local dev
+- [x] Add DATABASE_URL parsing to detect SQLite vs PostgreSQL
+- [x] Update docker-compose.yml to include PostgreSQL service
+- [x] Create migration script to copy SQLite data to PostgreSQL
 
 **Files:**
 - `internal/storage/postgres.go` - create PostgreSQL adapter

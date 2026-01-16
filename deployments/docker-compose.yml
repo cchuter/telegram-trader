@@ -59,7 +59,7 @@ services:
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
       - BOT_ADMIN_USER_IDS=${BOT_ADMIN_USER_IDS}
-      - DATABASE_URL=telegram-trader.db
+      - DATABASE_URL=${DATABASE_URL:-telegram-trader.db}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - GALACHAIN_SERVICE_URL=galachain-service:50051
     volumes:
