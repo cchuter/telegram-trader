@@ -403,11 +403,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 10: Implement basic authentication middleware
 
 **Do:**
-- [ ] Create `internal/bot/middleware/auth.go` with AuthMiddleware struct
-- [ ] Implement Authenticate() method that checks user_id against hardcoded whitelist (BOT_ADMIN_USER_IDS env var)
-- [ ] Create user session on first /start command
-- [ ] Return error for non-whitelisted users with "Access denied" message
-- [ ] Wire middleware into bot command handlers
+- [x] Create `internal/bot/middleware/auth.go` with AuthMiddleware struct
+- [x] Implement Authenticate() method that checks user_id against hardcoded whitelist (BOT_ADMIN_USER_IDS env var)
+- [x] Create user session on first /start command
+- [x] Return error for non-whitelisted users with "Access denied" message
+- [x] Wire middleware into bot command handlers
 
 **Files:**
 - `internal/bot/middleware/auth.go` - create authentication middleware
