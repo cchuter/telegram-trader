@@ -279,10 +279,10 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 7: Set up basic configuration loading for TypeScript service
 
 **Do:**
-- [ ] Install dotenv: `npm install dotenv @types/dotenv`
-- [ ] Create `galachain-service/src/config/index.ts` with Config interface
-- [ ] Add loadConfig() function using process.env
-- [ ] Create `galachain-service/.env.example` with placeholder values
+- [x] Install dotenv: `npm install dotenv @types/dotenv`
+- [x] Create `galachain-service/src/config/index.ts` with Config interface
+- [x] Add loadConfig() function using process.env
+- [x] Create `galachain-service/.env.example` with placeholder values
 
 **Files:**
 - `galachain-service/src/config/index.ts` - create config loader
