@@ -2571,14 +2571,14 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 61: Add end-to-end swap execution test
 
 **Do:**
-- [ ] Create `test/e2e/swap_test.go`
-- [ ] Use testnet for real blockchain testing (TON testnet, GalaChain testnet)
-- [ ] Create test wallet with test funds
-- [ ] Execute /swap command with small amount (0.001 TON)
-- [ ] Verify swap simulation response
-- [ ] Simulate user clicking [Confirm]
-- [ ] Verify swap execution on testnet
-- [ ] Verify transaction logged to trades.jsonl
+- [x] Create `test/e2e/swap_test.go`
+- [x] Use testnet for real blockchain testing (TON testnet, GalaChain testnet)
+- [x] Create test wallet with test funds
+- [x] Execute /swap command with small amount (0.001 TON)
+- [x] Verify swap simulation response
+- [x] Simulate user clicking [Confirm]
+- [x] Verify swap execution on testnet
+- [x] Verify transaction logged to trades.jsonl
 
 **Files:**
 - `test/e2e/swap_test.go` - create e2e swap test
