@@ -10,6 +10,7 @@ import (
 	"github.com/cchuter/telegram-trader/internal/errors"
 	"github.com/cchuter/telegram-trader/internal/galachain"
 	"github.com/cchuter/telegram-trader/internal/logging"
+	"github.com/cchuter/telegram-trader/internal/price"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
@@ -20,8 +21,14 @@ const (
 )
 
 // HandlePrice handles the /price command
-func HandlePrice(ctx context.Context, b *bot.Bot, update *models.Update, dexClient dex.Client, galaClient *galachain.Client, logger *logging.Logger) {
+func HandlePrice(ctx context.Context, b *bot.Bot, update *models.Update, dexClient dex.Client, galaClient *galachain.Client, priceClient *price.CoinGeckoClient, logger *logging.Logger) {
 	var message string
+
+	// Fetch USD prices
+	usdPrices := make(map[string]float64)
+	if priceClient != nil {
+		usdPrices = priceClient.GetMultipleUSDPrices(ctx, []string{"TON", "GALA"})
+	}
 
 	// Fetch TON/GALA price from ston.fi
 	var stonfiPrice float64
@@ -39,7 +46,13 @@ func HandlePrice(ctx context.Context, b *bot.Bot, update *models.Update, dexClie
 				message = "Error parsing TON/GALA price from ston.fi\n"
 			} else {
 				stonfiPrice = galaAmount / 1e9 // Convert from smallest units to GALA
-				message = fmt.Sprintf("TON/GALA on ston.fi: %.2f GALA\n", stonfiPrice)
+				message = fmt.Sprintf("TON/GALA on ston.fi: %.2f GALA", stonfiPrice)
+
+				// Add USD equivalent if available
+				if tonUSD, tonExists := usdPrices["TON"]; tonExists {
+					message += fmt.Sprintf(" (~$%.2f per TON)", tonUSD)
+				}
+				message += "\n"
 			}
 		}
 	} else {
@@ -49,20 +62,26 @@ func HandlePrice(ctx context.Context, b *bot.Bot, update *models.Update, dexClie
 	// Fetch GTON/GALA price from GalaChain service
 	var gswapPrice float64
 	if galaClient != nil {
-		price, err := galaClient.GetPrice(ctx, "GTON/GALA")
+		priceResp, err := galaClient.GetPrice(ctx, "GTON/GALA")
 		if err != nil {
 			botErr := errors.ErrPriceFetchFailed("gswap", err)
 			log.Printf("Price fetch error: %v", botErr)
 			message += fmt.Sprintf("%s\n", botErr.GetUserMessage())
 		} else {
 			// Parse the price string to float
-			priceFloat, err := strconv.ParseFloat(price.Price, 64)
+			priceFloat, err := strconv.ParseFloat(priceResp.Price, 64)
 			if err != nil {
 				log.Printf("Error parsing GalaChain price: %v", err)
 				message += "Error parsing GTON/GALA price from gswap\n"
 			} else {
 				gswapPrice = priceFloat
-				message += fmt.Sprintf("GTON/GALA on gswap: %.2f GALA\n", gswapPrice)
+				message += fmt.Sprintf("GTON/GALA on gswap: %.2f GALA", gswapPrice)
+
+				// Add USD equivalent if available (GTON = TON)
+				if tonUSD, tonExists := usdPrices["TON"]; tonExists {
+					message += fmt.Sprintf(" (~$%.2f per GTON)", tonUSD)
+				}
+				message += "\n"
 			}
 		}
 	} else {
@@ -88,6 +107,8 @@ func HandlePrice(ctx context.Context, b *bot.Bot, update *models.Update, dexClie
 			"user_id":      update.Message.From.ID,
 			"stonfi_price": stonfiPrice,
 			"gswap_price":  gswapPrice,
+			"ton_usd":      usdPrices["TON"],
+			"gala_usd":     usdPrices["GALA"],
 		})
 	}
 }

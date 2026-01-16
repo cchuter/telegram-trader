@@ -11,6 +11,7 @@ import (
 	"github.com/cchuter/telegram-trader/internal/dex"
 	"github.com/cchuter/telegram-trader/internal/galachain"
 	"github.com/cchuter/telegram-trader/internal/logging"
+	"github.com/cchuter/telegram-trader/internal/price"
 	"github.com/cchuter/telegram-trader/internal/storage"
 	"github.com/cchuter/telegram-trader/internal/wallet"
 	"github.com/go-telegram/bot"
@@ -27,6 +28,7 @@ type Bot struct {
 	walletManager     *wallet.Manager
 	dexClient         dex.Client
 	galaClient        *galachain.Client
+	priceClient       *price.CoinGeckoClient
 	arbitrageEngine   *arbitrage.Engine
 	arbitrageExecutor *arbitrage.Executor
 	logger            *logging.Logger
@@ -42,6 +44,7 @@ func New(token string, db storage.Database, adminUserIDs string, encryptionKey s
 	}
 
 	engine := arbitrage.NewEngine(dexClient, galaClient)
+	priceClient := price.NewCoinGeckoClient()
 
 	return &Bot{
 		token:             token,
@@ -51,6 +54,7 @@ func New(token string, db storage.Database, adminUserIDs string, encryptionKey s
 		walletManager:     walletManager,
 		dexClient:         dexClient,
 		galaClient:        galaClient,
+		priceClient:       priceClient,
 		arbitrageEngine:   engine,
 		arbitrageExecutor: arbitrage.NewExecutor(nil, nil, engine), // TODO: Pass actual clients in production
 		logger:            logger,
@@ -215,7 +219,7 @@ func (b *Bot) handleBalance(ctx context.Context, botInstance *bot.Bot, update *m
 	b.logger.LogCommand(ctx, update.Message.From.ID, update.Message.From.Username, "/balance", nil)
 
 	// Call the handler
-	handlers.HandleBalance(ctx, botInstance, update, b.galaClient, b.logger)
+	handlers.HandleBalance(ctx, botInstance, update, b.galaClient, b.priceClient, b.logger)
 }
 
 // handleWallet handles the /wallet command
@@ -298,7 +302,7 @@ func (b *Bot) handlePrice(ctx context.Context, botInstance *bot.Bot, update *mod
 	b.logger.LogCommand(ctx, update.Message.From.ID, update.Message.From.Username, "/price", nil)
 
 	// Call the handler
-	handlers.HandlePrice(ctx, botInstance, update, b.dexClient, b.galaClient, b.logger)
+	handlers.HandlePrice(ctx, botInstance, update, b.dexClient, b.galaClient, b.priceClient, b.logger)
 }
 
 // handleArbitrage handles the /arbitrage command

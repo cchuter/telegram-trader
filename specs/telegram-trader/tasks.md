@@ -1831,12 +1831,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 44: Add CoinGecko integration for USD pricing
 
 **Do:**
-- [ ] Create `internal/price/coingecko.go` with CoinGecko client
-- [ ] Implement GetUSDPrice() for TON, GALA, GTON tokens
-- [ ] Cache prices for 5 minutes (longer than trading prices)
-- [ ] Update /balance handler to show USD values
-- [ ] Update /price handler to show USD equivalents
-- [ ] Handle CoinGecko API failures gracefully (show crypto amounts only)
+- [x] Create `internal/price/coingecko.go` with CoinGecko client
+- [x] Implement GetUSDPrice() for TON, GALA, GTON tokens
+- [x] Cache prices for 5 minutes (longer than trading prices)
+- [x] Update /balance handler to show USD values
+- [x] Update /price handler to show USD equivalents
+- [x] Handle CoinGecko API failures gracefully (show crypto amounts only)
 
 **Files:**
 - `internal/price/coingecko.go` - create CoinGecko client
