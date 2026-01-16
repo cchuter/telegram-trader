@@ -79,12 +79,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 2: Set up TypeScript GalaChain service project
 
 **Do:**
-- [ ] Create `galachain-service/` directory
-- [ ] Run `npm init -y` in galachain-service directory
-- [ ] Install dependencies: `@grpc/grpc-js @grpc/proto-loader @gala-chain/gswap-sdk typescript @types/node ts-node`
-- [ ] Create `tsconfig.json` with strict mode enabled
-- [ ] Create `galachain-service/src/index.ts` with basic structure
-- [ ] Add `.gitignore` for Node.js (standard template + `dist/`, `*.log`, `.env`)
+- [x] Create `galachain-service/` directory
+- [x] Run `npm init -y` in galachain-service directory
+- [x] Install dependencies: `@grpc/grpc-js @grpc/proto-loader @gala-chain/gswap-sdk typescript @types/node ts-node`
+- [x] Create `tsconfig.json` with strict mode enabled
+- [x] Create `galachain-service/src/index.ts` with basic structure
+- [x] Add `.gitignore` for Node.js (standard template + `dist/`, `*.log`, `.env`)
 
 **Files:**
 - `galachain-service/package.json` - create with dependencies
