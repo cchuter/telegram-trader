@@ -240,10 +240,10 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 6: Set up basic configuration loading for Go service
 
 **Do:**
-- [ ] Create `internal/config/types.go` with Config struct (BotToken, DatabaseURL, EncryptionKey, GalaChainServiceURL)
-- [ ] Create `internal/config/config.go` with Load() function that reads from environment variables
-- [ ] Use `os.Getenv()` for now (no validation, no defaults)
-- [ ] Create `.env.example` with placeholder values
+- [x] Create `internal/config/types.go` with Config struct (BotToken, DatabaseURL, EncryptionKey, GalaChainServiceURL)
+- [x] Create `internal/config/config.go` with Load() function that reads from environment variables
+- [x] Use `os.Getenv()` for now (no validation, no defaults)
+- [x] Create `.env.example` with placeholder values
 
 **Files:**
 - `internal/config/types.go` - create config structures
