@@ -200,10 +200,10 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 5: Generate TypeScript gRPC code and set up server skeleton
 
 **Do:**
-- [ ] Add proto-loader script to package.json
-- [ ] Generate TypeScript types: `npx grpc_tools_node_protoc --js_out=import_style=commonjs,binary:./src/types --grpc_out=grpc_js:./src/types --ts_out=service=grpc-node,mode=grpc-js:./src/types -I ../proto ../proto/galachain.proto`
-- [ ] Create `galachain-service/src/server/grpc.ts` with gRPC server setup
-- [ ] Add basic server start/stop methods (empty handler implementations)
+- [x] Add proto-loader script to package.json
+- [x] Generate TypeScript types: `npx grpc_tools_node_protoc --js_out=import_style=commonjs,binary:./src/types --grpc_out=grpc_js:./src/types --ts_out=service=grpc-node,mode=grpc-js:./src/types -I ../proto ../proto/galachain.proto`
+- [x] Create `galachain-service/src/server/grpc.ts` with gRPC server setup
+- [x] Add basic server start/stop methods (empty handler implementations)
 
 **Files:**
 - `galachain-service/src/types/galachain_pb.js` - generate message types
