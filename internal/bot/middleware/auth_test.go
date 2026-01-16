@@ -12,9 +12,9 @@ import (
 
 // mockDatabase is a mock implementation of storage.Database for testing
 type mockDatabase struct {
-	sessions      map[int64]*storage.UserSession
-	saveError     error
-	getError      error
+	sessions  map[int64]*storage.UserSession
+	saveError error
+	getError  error
 }
 
 func newMockDatabase() *mockDatabase {
@@ -266,6 +266,7 @@ func TestNewAuthMiddleware(t *testing.T) {
 
 	if middleware == nil {
 		t.Error("NewAuthMiddleware() returned nil")
+		return
 	}
 
 	if len(middleware.whitelistIDs) != 2 {

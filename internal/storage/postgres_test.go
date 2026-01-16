@@ -116,13 +116,13 @@ func TestPostgresIntegration(t *testing.T) {
 		}
 
 		walletSession := &WalletSession{
-			UserID:                 88888,
-			WalletType:             "ton",
-			Address:                "UQTonConnect123",
-			IsActive:               true,
-			TonConnectClientID:     "client123",
-			TonConnectPrivateKey:   "encryptedprivkey",
-			TonConnectWalletID:     "wallet456",
+			UserID:               88888,
+			WalletType:           "ton",
+			Address:              "UQTonConnect123",
+			IsActive:             true,
+			TonConnectClientID:   "client123",
+			TonConnectPrivateKey: "encryptedprivkey",
+			TonConnectWalletID:   "wallet456",
 		}
 
 		// Save wallet session with TonConnect fields

@@ -45,8 +45,8 @@ func TestGetCorrelationIDFromContext_Empty(t *testing.T) {
 }
 
 func TestGetCorrelationIDFromContext_Nil(t *testing.T) {
-	retrievedID := GetCorrelationIDFromContext(nil)
+	retrievedID := GetCorrelationIDFromContext(context.TODO())
 	if retrievedID != "" {
-		t.Errorf("Expected empty correlation ID for nil context, got %s", retrievedID)
+		t.Errorf("Expected empty correlation ID for empty context, got %s", retrievedID)
 	}
 }

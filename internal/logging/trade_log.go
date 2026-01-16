@@ -158,7 +158,6 @@ func (tl *TradeLogger) writeEntry(entry TradeLogEntry) error {
 	return nil
 }
 
-
 // Close closes the trade logger and its underlying file
 func (tl *TradeLogger) Close() error {
 	tl.mu.Lock()

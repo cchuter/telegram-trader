@@ -13,7 +13,7 @@ func TestSimulateSwap(t *testing.T) {
 	mockResponse := SwapSimulateResponse{
 		OfferAddress: TONAddress,
 		AskAddress:   "EQBadmOayy7_bD18skopfOZw2kmTgDdBhXPVsuTQq1lalaBV",
-		OfferUnits:   "1000000000", // 1 TON in nanotons
+		OfferUnits:   "1000000000",  // 1 TON in nanotons
 		AskUnits:     "26185872472", // Actual response from API
 		FeeAddress:   "EQBadmOayy7_bD18skopfOZw2kmTgDdBhXPVsuTQq1lalaBV",
 		FeeUnits:     "78938549", // Actual fee from API

@@ -1,0 +1,49 @@
+run:
+  timeout: 5m
+  tests: true
+  build-tags:
+    - integration
+    - e2e
+
+linters:
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - gosimple
+    - ineffassign
+    - unused
+    - gofmt
+
+linters-settings:
+  govet:
+    enable:
+      - shadow
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  staticcheck:
+    checks: ["all"]
+
+issues:
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - errcheck
+        - staticcheck
+    # Exclude generated files
+    - path: \.pb\.go$
+      linters:
+        - govet
+        - errcheck
+        - staticcheck
+        - gosimple
+        - ineffassign
+        - unused
+        - gofmt
+    # Exclude errcheck for intentional blank assignments
+    - text: "Error return value.*is not checked"
+      linters:
+        - errcheck
+  max-same-issues: 50

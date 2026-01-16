@@ -55,10 +55,10 @@ func SetupMockGRPC() *mocks.MockGRPCClient {
 
 	// Add default test prices
 	client.SetPrice("GTON/GALA", &pb.PriceResponse{
-		Price:     "855.0",
-		Timestamp: time.Now().Unix(),
-		Bid:       "854.5",
-		Ask:       "855.5",
+		Price:      "855.0",
+		Timestamp:  time.Now().Unix(),
+		Bid:        "854.5",
+		Ask:        "855.5",
 		Volume_24H: "1000000.0",
 	})
 
@@ -166,11 +166,9 @@ func WaitForCondition(t *testing.T, condition func() bool, timeout time.Duration
 			return
 		}
 
-		select {
-		case <-ticker.C:
-			if time.Now().After(deadline) {
-				t.Fatalf("%s: condition not met within timeout", message)
-			}
+		<-ticker.C
+		if time.Now().After(deadline) {
+			t.Fatalf("%s: condition not met within timeout", message)
 		}
 	}
 }

@@ -174,7 +174,7 @@ func TestTruncateHash(t *testing.T) {
 		{"short", "short"},
 		{"", ""},
 		{"abc123def456ghi789jk", "abc123def456ghi789jk"}, // 20 chars exactly, not truncated
-		{"abc123def456ghi789jkl", "abc123de...789jkl"}, // 21 chars, truncated
+		{"abc123def456ghi789jkl", "abc123de...789jkl"},   // 21 chars, truncated
 	}
 
 	for _, tt := range tests {

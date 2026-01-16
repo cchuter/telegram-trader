@@ -107,15 +107,15 @@ func (m *MockDatabase) SaveWalletSession(ctx context.Context, session *storage.W
 
 	// Copy the session to avoid external mutations
 	sessionCopy := &storage.WalletSession{
-		UserID:                 session.UserID,
-		WalletType:             session.WalletType,
-		Address:                session.Address,
-		ConnectedAt:            session.ConnectedAt,
-		UpdatedAt:              session.UpdatedAt,
-		IsActive:               session.IsActive,
-		TonConnectClientID:     session.TonConnectClientID,
-		TonConnectPrivateKey:   session.TonConnectPrivateKey,
-		TonConnectWalletID:     session.TonConnectWalletID,
+		UserID:               session.UserID,
+		WalletType:           session.WalletType,
+		Address:              session.Address,
+		ConnectedAt:          session.ConnectedAt,
+		UpdatedAt:            session.UpdatedAt,
+		IsActive:             session.IsActive,
+		TonConnectClientID:   session.TonConnectClientID,
+		TonConnectPrivateKey: session.TonConnectPrivateKey,
+		TonConnectWalletID:   session.TonConnectWalletID,
 	}
 
 	m.WalletSessions[key] = sessionCopy

@@ -58,8 +58,8 @@ func main() {
 
 	// Initialize TON blockchain client
 	tonClient := ton.NewClient()
-	if err := tonClient.Connect(context.Background()); err != nil {
-		logger.Fatal("Failed to connect to TON blockchain", err, nil)
+	if errTon := tonClient.Connect(context.Background()); errTon != nil {
+		logger.Fatal("Failed to connect to TON blockchain", errTon, nil)
 	}
 	defer tonClient.Close()
 
@@ -78,11 +78,11 @@ func main() {
 	// Initialize GalaChain client if service URL is configured
 	var galaClient *galachain.Client
 	if cfg.GalaChainServiceURL != "" {
-		var err error
-		galaClient, err = galachain.Connect(ctx, cfg.GalaChainServiceURL)
-		if err != nil {
+		var errGala error
+		galaClient, errGala = galachain.Connect(ctx, cfg.GalaChainServiceURL)
+		if errGala != nil {
 			logger.Warn("Failed to connect to GalaChain service, continuing without it", map[string]interface{}{
-				"error": err.Error(),
+				"error": errGala.Error(),
 			})
 		} else {
 			defer galaClient.Close()
@@ -100,8 +100,8 @@ func main() {
 	// Start health check HTTP server in a goroutine
 	go func() {
 		logger.Info("Starting health check server on port 8080", nil)
-		if err := healthChecker.StartHealthServer("8080"); err != nil {
-			logger.LogError(ctx, 0, "system", err, "Health check server failed", nil)
+		if errHealth := healthChecker.StartHealthServer("8080"); errHealth != nil {
+			logger.LogError(ctx, 0, "system", errHealth, "Health check server failed", nil)
 		}
 	}()
 

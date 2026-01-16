@@ -124,7 +124,7 @@ func (m *Manager) InitiateTonConnect(ctx context.Context, userID int64) (*TonCon
 
 		// Save wallet session to database
 		if address != "" {
-			m.saveTonConnectSession(ctx, userID, session, address)
+			_ = m.saveTonConnectSession(ctx, userID, session, address)
 		}
 	})
 

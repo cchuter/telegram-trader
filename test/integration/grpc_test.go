@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package integration
@@ -40,11 +41,11 @@ func (s *mockGalaChainServer) GetPrice(ctx context.Context, req *pb.GetPriceRequ
 	}
 
 	return &pb.PriceResponse{
-		Pair:      req.Pair,
-		Price:     "855.00",
-		Timestamp: time.Now().Unix(),
-		Bid:       "854.50",
-		Ask:       "855.50",
+		Pair:       req.Pair,
+		Price:      "855.00",
+		Timestamp:  time.Now().Unix(),
+		Bid:        "854.50",
+		Ask:        "855.50",
 		Volume_24H: "1000000.00",
 	}, nil
 }
@@ -94,8 +95,8 @@ func TestGRPCIntegration(t *testing.T) {
 
 	// Start server in background
 	go func() {
-		if err := server.Serve(listener); err != nil {
-			t.Logf("Server error: %v", err)
+		if errServe := server.Serve(listener); errServe != nil {
+			t.Logf("Server error: %v", errServe)
 		}
 	}()
 

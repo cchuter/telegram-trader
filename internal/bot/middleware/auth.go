@@ -15,8 +15,8 @@ import (
 
 // AuthMiddleware handles user authentication and authorization
 type AuthMiddleware struct {
-	db            storage.Database
-	whitelistIDs  []int64
+	db           storage.Database
+	whitelistIDs []int64
 }
 
 // NewAuthMiddleware creates a new authentication middleware instance

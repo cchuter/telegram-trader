@@ -93,8 +93,8 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 	}
 
 	// Validate token symbols
-	if err := validation.ValidateTokenSymbol(fromToken); err != nil {
-		message := fmt.Sprintf("Invalid token symbol: %s. %v", fromToken, err)
+	if errValidate := validation.ValidateTokenSymbol(fromToken); errValidate != nil {
+		message := fmt.Sprintf("Invalid token symbol: %s. %v", fromToken, errValidate)
 		_, sendErr := b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
 			Text:   message,
@@ -104,8 +104,8 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 		}
 		return
 	}
-	if err := validation.ValidateTokenSymbol(toToken); err != nil {
-		message := fmt.Sprintf("Invalid token symbol: %s. %v", toToken, err)
+	if errValidate := validation.ValidateTokenSymbol(toToken); errValidate != nil {
+		message := fmt.Sprintf("Invalid token symbol: %s. %v", toToken, errValidate)
 		_, sendErr := b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
 			Text:   message,
@@ -119,12 +119,12 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 	// Validate DEX name
 	if dexName != "stonfi" {
 		message := "Currently only 'stonfi' DEX is supported"
-		_, err := b.SendMessage(ctx, &bot.SendMessageParams{
+		_, errSend := b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
 			Text:   message,
 		})
-		if err != nil {
-			log.Printf("Error sending DEX error message: %v", err)
+		if errSend != nil {
+			log.Printf("Error sending DEX error message: %v", errSend)
 		}
 		return
 	}
@@ -163,7 +163,7 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 		// Log failed trade to trade log
 		executionTime := time.Since(startTime).Milliseconds()
 		if tradeLogger != nil {
-			tradeLogger.LogSwap(update.Message.From.ID, "ton", fromToken, toToken, fmt.Sprintf("%.2f", amountFloat), "0", "0", "", logging.TradeStatusFailed, executionTime, err.Error())
+			_ = tradeLogger.LogSwap(update.Message.From.ID, "ton", fromToken, toToken, fmt.Sprintf("%.2f", amountFloat), "0", "0", "", logging.TradeStatusFailed, executionTime, err.Error())
 		}
 		return
 	}
@@ -252,7 +252,7 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 	// Log simulated trade (POC mode - no actual execution)
 	executionTime := time.Since(startTime).Milliseconds()
 	if tradeLogger != nil {
-		tradeLogger.LogSwap(
+		_ = tradeLogger.LogSwap(
 			update.Message.From.ID,
 			"ton",
 			fromToken,
@@ -384,7 +384,7 @@ func HandleSwapCallback(ctx context.Context, b *bot.Bot, update *models.Update, 
 			// Log failed trade
 			executionTime := time.Since(startTime).Milliseconds()
 			if tradeLogger != nil {
-				tradeLogger.LogSwap(userID, "ton", swapCtx.FromToken, swapCtx.ToToken, swapCtx.Amount, "0", swapCtx.Fee, "", logging.TradeStatusFailed, executionTime, "wallet not connected")
+				_ = tradeLogger.LogSwap(userID, "ton", swapCtx.FromToken, swapCtx.ToToken, swapCtx.Amount, "0", swapCtx.Fee, "", logging.TradeStatusFailed, executionTime, "wallet not connected")
 			}
 			return
 		}
@@ -406,7 +406,7 @@ func HandleSwapCallback(ctx context.Context, b *bot.Bot, update *models.Update, 
 			// Log failed trade
 			executionTime := time.Since(startTime).Milliseconds()
 			if tradeLogger != nil {
-				tradeLogger.LogSwap(userID, "ton", swapCtx.FromToken, swapCtx.ToToken, swapCtx.Amount, "0", swapCtx.Fee, "", logging.TradeStatusFailed, executionTime, "decryption failed")
+				_ = tradeLogger.LogSwap(userID, "ton", swapCtx.FromToken, swapCtx.ToToken, swapCtx.Amount, "0", swapCtx.Fee, "", logging.TradeStatusFailed, executionTime, "decryption failed")
 			}
 			return
 		}
@@ -452,7 +452,7 @@ func HandleSwapCallback(ctx context.Context, b *bot.Bot, update *models.Update, 
 		// Log successful trade
 		executionTime := time.Since(startTime).Milliseconds()
 		if tradeLogger != nil {
-			tradeLogger.LogSwap(
+			_ = tradeLogger.LogSwap(
 				userID,
 				"ton",
 				swapCtx.FromToken,
@@ -468,12 +468,12 @@ func HandleSwapCallback(ctx context.Context, b *bot.Bot, update *models.Update, 
 		}
 
 		logger.InfoContext(ctx, "Swap executed successfully", map[string]interface{}{
-			"user_id":          userID,
-			"from_token":       swapCtx.FromToken,
-			"to_token":         swapCtx.ToToken,
-			"amount":           swapCtx.Amount,
-			"output":           swapCtx.OutputAmount,
-			"tx_hash":          txHash,
+			"user_id":           userID,
+			"from_token":        swapCtx.FromToken,
+			"to_token":          swapCtx.ToToken,
+			"amount":            swapCtx.Amount,
+			"output":            swapCtx.OutputAmount,
+			"tx_hash":           txHash,
 			"execution_time_ms": executionTime,
 		})
 	}

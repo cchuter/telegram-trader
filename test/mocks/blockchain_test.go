@@ -105,6 +105,6 @@ func TestMockBlockchainClient_Reset(t *testing.T) {
 	// Verify reset
 	balance, err := client.GetBalance(ctx, address)
 	require.NoError(t, err)
-	assert.Equal(t, "0.0", balance) // Should return default "0.0"
+	assert.Equal(t, "0.0", balance)                  // Should return default "0.0"
 	assert.Equal(t, 1, client.GetCallCount(address)) // Call count should start from 1 after reset
 }

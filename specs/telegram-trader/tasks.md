@@ -2751,11 +2751,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 65: Set up golangci-lint
 
 **Do:**
-- [ ] Install golangci-lint: `go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest`
-- [ ] Create `.golangci.yml` configuration
-- [ ] Enable linters: govet, errcheck, staticcheck, gosimple, ineffassign, unused, gofmt
-- [ ] Fix all linting errors in codebase
-- [ ] Add lint command to Makefile
+- [x] Install golangci-lint: `go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest`
+- [x] Create `.golangci.yml` configuration
+- [x] Enable linters: govet, errcheck, staticcheck, gosimple, ineffassign, unused, gofmt
+- [x] Fix all linting errors in codebase
+- [x] Add lint command to Makefile
 
 **Files:**
 - `.golangci.yml` - create linter configuration

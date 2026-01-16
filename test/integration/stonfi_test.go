@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package integration
@@ -20,8 +21,8 @@ const (
 	usdtTokenAddress = "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs"
 
 	// Test amounts
-	oneTonNanotons = "1000000000"   // 1 TON
-	fiveTonNanotons = "5000000000"  // 5 TON
+	oneTonNanotons  = "1000000000" // 1 TON
+	fiveTonNanotons = "5000000000" // 5 TON
 
 	// API timeout
 	apiTimeout = 10 * time.Second

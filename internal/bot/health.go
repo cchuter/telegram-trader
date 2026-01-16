@@ -101,8 +101,8 @@ func (h *HealthChecker) checkDatabase(ctx context.Context) DependencyStatus {
 	if err != nil {
 		errMsg := err.Error()
 		if errMsg != "sql: no rows in result set" &&
-		   errMsg != "user session not found" &&
-		   errMsg != "user session not found for user_id 0" {
+			errMsg != "user session not found" &&
+			errMsg != "user session not found for user_id 0" {
 			return DependencyStatus{
 				Name:    "database",
 				Status:  "unhealthy",

@@ -28,8 +28,8 @@ func TestTransactionBuilder_BuildSwapTransaction(t *testing.T) {
 	req := &SwapRequest{
 		FromToken:  "TON",
 		ToToken:    GALATokenAddress,
-		Amount:     "1000000000", // 1 TON in nanotons
-		MinOutput:  "850000000",  // Minimum 0.85 TON equivalent
+		Amount:     "1000000000",                                       // 1 TON in nanotons
+		MinOutput:  "850000000",                                        // Minimum 0.85 TON equivalent
 		RouterAddr: "EQBsGx9ArADUrREB34W-ghgsCgBShvfUr4Jvlu-0KGc33Rbt", // ston.fi router
 		WalletAddr: "EQCD39VS5jcptHL8vMjEXrzGaRcCVYto7HUn4bpAOg8xqB2N",
 		PrivateKey: "mock_private_key",
@@ -68,8 +68,8 @@ func TestClient_ExecuteSwap(t *testing.T) {
 	req := &SwapRequest{
 		FromToken:  "TON",
 		ToToken:    GALATokenAddress,
-		Amount:     "1000000000", // 1 TON in nanotons
-		MinOutput:  "850000000",  // Minimum 0.85 TON equivalent
+		Amount:     "1000000000",                                       // 1 TON in nanotons
+		MinOutput:  "850000000",                                        // Minimum 0.85 TON equivalent
 		RouterAddr: "EQBsGx9ArADUrREB34W-ghgsCgBShvfUr4Jvlu-0KGc33Rbt", // ston.fi router
 		WalletAddr: "EQCD39VS5jcptHL8vMjEXrzGaRcCVYto7HUn4bpAOg8xqB2N",
 		PrivateKey: "mock_private_key",

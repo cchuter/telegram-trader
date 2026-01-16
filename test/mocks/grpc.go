@@ -21,8 +21,8 @@ type MockGRPCClient struct {
 	CloseErr      error
 
 	// Call tracking
-	GetBalanceCalls map[int64]int    // userID -> call count
-	GetPriceCalls   map[string]int   // pair -> call count
+	GetBalanceCalls map[int64]int  // userID -> call count
+	GetPriceCalls   map[string]int // pair -> call count
 	CloseCalls      int
 }
 
@@ -93,20 +93,20 @@ func (m *MockGRPCClient) GetPrice(ctx context.Context, pair string) (*pb.PriceRe
 	if !exists {
 		// Return default price if not configured
 		return &pb.PriceResponse{
-			Price:     "0.0",
-			Timestamp: 0,
-			Bid:       "0.0",
-			Ask:       "0.0",
+			Price:      "0.0",
+			Timestamp:  0,
+			Bid:        "0.0",
+			Ask:        "0.0",
 			Volume_24H: "0.0",
 		}, nil
 	}
 
 	// Return a copy to prevent external mutations
 	return &pb.PriceResponse{
-		Price:     response.Price,
-		Timestamp: response.Timestamp,
-		Bid:       response.Bid,
-		Ask:       response.Ask,
+		Price:      response.Price,
+		Timestamp:  response.Timestamp,
+		Bid:        response.Bid,
+		Ask:        response.Ask,
 		Volume_24H: response.Volume_24H,
 	}, nil
 }

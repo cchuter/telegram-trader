@@ -117,6 +117,6 @@ func TestMockDEXClient_Reset(t *testing.T) {
 	// Verify reset - should return default simulation
 	simulation, err := client.SimulateSwap(ctx, fromToken, toToken, amount)
 	require.NoError(t, err)
-	assert.Equal(t, "1000.0", simulation.OutputAmount) // Default value
+	assert.Equal(t, "1000.0", simulation.OutputAmount)                  // Default value
 	assert.Equal(t, 1, client.GetCallCount(fromToken, toToken, amount)) // Call count should start from 1
 }

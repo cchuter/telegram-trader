@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -151,13 +152,13 @@ func TestSwapConfirmationFlow(t *testing.T) {
 	require.NoError(t, err, "Failed to encrypt private key")
 
 	walletSession := &storage.WalletSession{
-		UserID:                 swapTestUserID,
-		WalletType:             "ton",
-		Address:                testTonWalletAddr,
-		ConnectedAt:            time.Now(),
-		UpdatedAt:              time.Now(),
-		IsActive:               true,
-		TonConnectPrivateKey:   encryptedKey,
+		UserID:               swapTestUserID,
+		WalletType:           "ton",
+		Address:              testTonWalletAddr,
+		ConnectedAt:          time.Now(),
+		UpdatedAt:            time.Now(),
+		IsActive:             true,
+		TonConnectPrivateKey: encryptedKey,
 	}
 	err = db.SaveWalletSession(ctx, walletSession)
 	require.NoError(t, err, "Failed to save wallet session")
@@ -278,7 +279,7 @@ func TestSwapExecutionOnTestnet(t *testing.T) {
 	// Step 1: Simulate swap
 	fromAddr := "TON"
 	toAddr := "EQBadmOayy7_bD18skopfOZw2kmTgDdBhXPVsuTQq1lalaBV" // GALA
-	amountUnits := "1000000" // 0.001 TON
+	amountUnits := "1000000"                                     // 0.001 TON
 
 	simulation, err := stonfiClient.SimulateSwap(ctx, fromAddr, toAddr, amountUnits)
 	require.NoError(t, err, "Swap simulation should succeed")
@@ -299,7 +300,7 @@ func TestSwapExecutionOnTestnet(t *testing.T) {
 		ToToken:    toAddr,
 		Amount:     amountUnits,
 		MinOutput:  fmt.Sprintf("%.0f", 0.99*float64(len(simulation.OutputAmount))), // 1% slippage
-		RouterAddr: "EQABNpNvz2WDhEwNPqfhPCZX2gVnHrSyZQ5o8SwY5hELKEj1", // ston.fi router address
+		RouterAddr: "EQABNpNvz2WDhEwNPqfhPCZX2gVnHrSyZQ5o8SwY5hELKEj1",              // ston.fi router address
 		WalletAddr: testTonWalletAddr,
 		PrivateKey: decryptedKey,
 	}

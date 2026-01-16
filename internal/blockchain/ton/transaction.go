@@ -16,13 +16,13 @@ import (
 
 // SwapRequest represents a request to execute a token swap
 type SwapRequest struct {
-	FromToken   string // Source token address (e.g., "TON" or jetton address)
-	ToToken     string // Destination token address
-	Amount      string // Input amount in nanotons or smallest units
-	MinOutput   string // Minimum output amount (for slippage protection)
-	RouterAddr  string // ston.fi router contract address
-	WalletAddr  string // User's wallet address
-	PrivateKey  string // User's private key (will be decrypted before use)
+	FromToken  string // Source token address (e.g., "TON" or jetton address)
+	ToToken    string // Destination token address
+	Amount     string // Input amount in nanotons or smallest units
+	MinOutput  string // Minimum output amount (for slippage protection)
+	RouterAddr string // ston.fi router contract address
+	WalletAddr string // User's wallet address
+	PrivateKey string // User's private key (will be decrypted before use)
 }
 
 // SwapResult represents the result of a swap execution

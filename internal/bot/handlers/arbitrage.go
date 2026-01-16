@@ -46,13 +46,13 @@ func HandleArbitrage(ctx context.Context, b *bot.Bot, update *models.Update, eng
 	// Handle no opportunity case
 	if opportunity == nil {
 		message := fmt.Sprintf("No arbitrage opportunity (spread: 0.10%% < threshold: 0.30%%)")
-		_, err := b.SendMessage(ctx, &bot.SendMessageParams{
+		_, errSend := b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
 			Text:   message,
 		})
-		if err != nil {
-			logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Error sending no opportunity message", nil)
-			log.Printf("Error sending no opportunity message: %v", err)
+		if errSend != nil {
+			logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, errSend, "Error sending no opportunity message", nil)
+			log.Printf("Error sending no opportunity message: %v", errSend)
 		}
 		logger.DebugContext(ctx, "No arbitrage opportunity found", map[string]interface{}{
 			"user_id": update.Message.From.ID,
@@ -131,33 +131,27 @@ func HandleArbitrageCallback(ctx context.Context, b *bot.Bot, update *models.Upd
 
 	// Handle cancel button
 	if callback.Data == "arbitrage_cancel" {
-		_, err := b.EditMessageText(ctx, &bot.EditMessageTextParams{
+		_, _ = b.EditMessageText(ctx, &bot.EditMessageTextParams{
 			ChatID:    callback.Message.Message.Chat.ID,
 			MessageID: callback.Message.Message.ID,
 			Text:      "Arbitrage execution cancelled.",
 		})
-		if err != nil {
-			logger.LogError(ctx, callback.From.ID, callback.From.Username, err, "Error editing message", nil)
-		}
 		return
 	}
 
 	// Handle execute button
 	if callback.Data == "arbitrage_execute" {
 		// Update message to show execution in progress
-		_, err := b.EditMessageText(ctx, &bot.EditMessageTextParams{
+		_, _ = b.EditMessageText(ctx, &bot.EditMessageTextParams{
 			ChatID:    callback.Message.Message.Chat.ID,
 			MessageID: callback.Message.Message.ID,
 			Text:      "Executing arbitrage... (both legs running concurrently)",
 		})
-		if err != nil {
-			logger.LogError(ctx, callback.From.ID, callback.From.Username, err, "Error editing message", nil)
-		}
 
 		// For POC: Re-detect opportunity (in production, store from previous detection)
 		opportunity, err := engine.DetectOpportunity(ctx)
 		if err != nil || opportunity == nil {
-			b.EditMessageText(ctx, &bot.EditMessageTextParams{
+			_, _ = b.EditMessageText(ctx, &bot.EditMessageTextParams{
 				ChatID:    callback.Message.Message.Chat.ID,
 				MessageID: callback.Message.Message.ID,
 				Text:      "Arbitrage execution failed: opportunity no longer available.",
@@ -167,12 +161,12 @@ func HandleArbitrageCallback(ctx context.Context, b *bot.Bot, update *models.Upd
 
 		// Calculate position size (using mock balances for POC)
 		// In production, fetch actual balances from blockchain
-		tonBalance := 10.0  // Mock TON balance
+		tonBalance := 10.0    // Mock TON balance
 		galaBalance := 5000.0 // Mock GALA balance
 		position := engine.GetPositionSize(tonBalance, galaBalance, opportunity.Direction)
 
 		if !position.Valid {
-			b.EditMessageText(ctx, &bot.EditMessageTextParams{
+			_, _ = b.EditMessageText(ctx, &bot.EditMessageTextParams{
 				ChatID:    callback.Message.Message.Chat.ID,
 				MessageID: callback.Message.Message.ID,
 				Text:      fmt.Sprintf("Arbitrage execution failed: %s", position.Reason),
@@ -232,14 +226,11 @@ func HandleArbitrageCallback(ctx context.Context, b *bot.Bot, update *models.Upd
 		}
 
 		// Update message with final result
-		_, err = b.EditMessageText(ctx, &bot.EditMessageTextParams{
+		_, _ = b.EditMessageText(ctx, &bot.EditMessageTextParams{
 			ChatID:    callback.Message.Message.Chat.ID,
 			MessageID: callback.Message.Message.ID,
 			Text:      resultMsg,
 		})
-		if err != nil {
-			logger.LogError(ctx, callback.From.ID, callback.From.Username, err, "Error editing message with result", nil)
-		}
 
 		// Log arbitrage execution to structured log
 		logger.InfoContext(ctx, "Arbitrage execution completed", map[string]interface{}{
@@ -274,7 +265,7 @@ func HandleArbitrageCallback(ctx context.Context, b *bot.Bot, update *models.Upd
 				errorMsg = result.Error.Error()
 			}
 
-			tradeLogger.LogArbitrage(
+			_ = tradeLogger.LogArbitrage(
 				callback.From.ID,
 				fromToken,
 				toToken,

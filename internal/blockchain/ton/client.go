@@ -9,8 +9,8 @@ import (
 	"github.com/cchuter/telegram-trader/internal/utils"
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/liteclient"
-	"github.com/xssnick/tonutils-go/tvm/cell"
 	"github.com/xssnick/tonutils-go/ton"
+	"github.com/xssnick/tonutils-go/tvm/cell"
 )
 
 // Client implements blockchain.Client for TON blockchain
@@ -63,15 +63,15 @@ func (c *Client) GetBalance(ctx context.Context, walletAddr string) (string, err
 	var result string
 	err = utils.RetryWithBackoff(ctx, func(ctx context.Context) error {
 		// Get the current blockchain block
-		block, err := c.api.CurrentMasterchainInfo(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to get masterchain info: %w", err)
+		block, errBlock := c.api.CurrentMasterchainInfo(ctx)
+		if errBlock != nil {
+			return fmt.Errorf("failed to get masterchain info: %w", errBlock)
 		}
 
 		// Get account state from blockchain
-		account, err := c.api.GetAccount(ctx, block, addr)
-		if err != nil {
-			return fmt.Errorf("failed to get account: %w", err)
+		account, errAcct := c.api.GetAccount(ctx, block, addr)
+		if errAcct != nil {
+			return fmt.Errorf("failed to get account: %w", errAcct)
 		}
 
 		// Check if account exists
@@ -117,22 +117,22 @@ func (c *Client) GetJettonBalance(ctx context.Context, walletAddr string, jetton
 	var result string
 	err = utils.RetryWithBackoff(ctx, func(ctx context.Context) error {
 		// Get the current blockchain block
-		block, err := c.api.CurrentMasterchainInfo(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to get masterchain info: %w", err)
+		block, errBlock := c.api.CurrentMasterchainInfo(ctx)
+		if errBlock != nil {
+			return fmt.Errorf("failed to get masterchain info: %w", errBlock)
 		}
 
 		// Get jetton wallet address for the owner
 		// This calls the get_wallet_address method on the jetton master contract
-		jettonWallet, err := c.getJettonWalletAddress(ctx, block, masterAddr, ownerAddr)
-		if err != nil {
-			return fmt.Errorf("failed to get jetton wallet address: %w", err)
+		jettonWallet, errWallet := c.getJettonWalletAddress(ctx, block, masterAddr, ownerAddr)
+		if errWallet != nil {
+			return fmt.Errorf("failed to get jetton wallet address: %w", errWallet)
 		}
 
 		// Get the jetton wallet account
-		account, err := c.api.GetAccount(ctx, block, jettonWallet)
-		if err != nil {
-			return fmt.Errorf("failed to get jetton wallet account: %w", err)
+		account, errAcct := c.api.GetAccount(ctx, block, jettonWallet)
+		if errAcct != nil {
+			return fmt.Errorf("failed to get jetton wallet account: %w", errAcct)
 		}
 
 		// Check if jetton wallet exists
@@ -143,9 +143,9 @@ func (c *Client) GetJettonBalance(ctx context.Context, walletAddr string, jetton
 		}
 
 		// Call get_wallet_data method to get the balance
-		balance, err := c.getJettonWalletBalance(ctx, block, jettonWallet)
-		if err != nil {
-			return fmt.Errorf("failed to get jetton balance: %w", err)
+		balance, errBal := c.getJettonWalletBalance(ctx, block, jettonWallet)
+		if errBal != nil {
+			return fmt.Errorf("failed to get jetton balance: %w", errBal)
 		}
 
 		// Convert balance to float (assuming 9 decimals for GALA, same as TON)

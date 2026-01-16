@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -37,8 +38,8 @@ const (
 	arbTestPrivateKey = "0000000000000000000000000000000000000000000000000000000000000001" // Example key
 
 	// Minimal test amounts
-	testTonAmount  = 0.001  // 0.001 TON (minimum for testing)
-	testGalaAmount = 10.0   // 10 GALA (minimum for testing)
+	testTonAmount  = 0.001 // 0.001 TON (minimum for testing)
+	testGalaAmount = 10.0  // 10 GALA (minimum for testing)
 )
 
 // setupArbitrageTestEnvironment creates test infrastructure for arbitrage e2e tests
@@ -278,8 +279,8 @@ func TestArbitrageWithInsufficientBalance(t *testing.T) {
 	engine := arbitrage.NewEngine(stonfiClient, galaClient)
 
 	// Try to calculate position with insufficient balance (below minimums)
-	insufficientTonBalance := 0.0001  // Below 1 TON minimum
-	insufficientGalaBalance := 5.0    // Below 10 GALA minimum
+	insufficientTonBalance := 0.0001 // Below 1 TON minimum
+	insufficientGalaBalance := 5.0   // Below 10 GALA minimum
 
 	position := engine.GetPositionSize(insufficientTonBalance, insufficientGalaBalance, arbitrage.BuyTonSellGala)
 	require.NotNil(t, position, "Position should be calculated")

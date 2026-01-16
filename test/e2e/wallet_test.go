@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -20,12 +21,12 @@ import (
 )
 
 const (
-	testUserID       = int64(123456789)
-	testChatID       = int64(987654321)
-	testUsername     = "testuser"
-	testEncryptKey   = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" // 32-byte base64 key
-	testWalletAddr   = "UQTest1234567890abcdefghijklmnopqrstuvwxyz"
-	testTimeout      = 10 * time.Second
+	testUserID     = int64(123456789)
+	testChatID     = int64(987654321)
+	testUsername   = "testuser"
+	testEncryptKey = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" // 32-byte base64 key
+	testWalletAddr = "UQTest1234567890abcdefghijklmnopqrstuvwxyz"
+	testTimeout    = 10 * time.Second
 )
 
 // setupTestEnvironment creates a test database and encryption key
@@ -202,7 +203,7 @@ func TestWalletConnectionFlow(t *testing.T) {
 		// Try to retrieve existing wallet
 		existing, err := walletManager.GetTonWallet(ctx, testUserID)
 		require.NoError(t, err)
-		assert.NotNil(t, existing, "Should find existing wallet")
+		require.NotNil(t, existing, "Should find existing wallet")
 		assert.True(t, existing.IsActive, "Wallet should be active")
 
 		// Verify the handler would detect this and show appropriate message

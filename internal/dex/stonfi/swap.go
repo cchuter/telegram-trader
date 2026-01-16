@@ -6,24 +6,24 @@ import (
 
 // SwapSimulateRequest represents the request body for POST /v1/swap/simulate
 type SwapSimulateRequest struct {
-	OfferAddress      string `json:"offer_address"`       // Source token address or "TON"
-	AskAddress        string `json:"ask_address"`         // Destination token address
-	Units             string `json:"units"`               // Input amount in smallest units
-	SlippageTolerance string `json:"slippage_tolerance"`  // Slippage tolerance (e.g., "0.01" for 1%)
+	OfferAddress      string `json:"offer_address"`      // Source token address or "TON"
+	AskAddress        string `json:"ask_address"`        // Destination token address
+	Units             string `json:"units"`              // Input amount in smallest units
+	SlippageTolerance string `json:"slippage_tolerance"` // Slippage tolerance (e.g., "0.01" for 1%)
 }
 
 // SwapSimulateResponse represents the response from POST /v1/swap/simulate
 type SwapSimulateResponse struct {
-	OfferAddress string `json:"offer_address"` // Source token address
-	AskAddress   string `json:"ask_address"`   // Destination token address
-	OfferUnits   string `json:"offer_units"`   // Input amount
-	AskUnits     string `json:"ask_units"`     // Expected output amount
-	FeeAddress   string `json:"fee_address"`   // Fee token address
-	FeeUnits     string `json:"fee_units"`     // Fee amount
-	FeePercent   string `json:"fee_percent"`   // Fee percentage (e.g., "0.3" for 0.3%)
-	MinAskUnits  string `json:"min_ask_units"` // Minimum output after slippage
-	PriceImpact  string `json:"price_impact"`  // Price impact (e.g., "0.01" for 1%)
-	SwapRate     string `json:"swap_rate"`     // Exchange rate
+	OfferAddress  string `json:"offer_address"`            // Source token address
+	AskAddress    string `json:"ask_address"`              // Destination token address
+	OfferUnits    string `json:"offer_units"`              // Input amount
+	AskUnits      string `json:"ask_units"`                // Expected output amount
+	FeeAddress    string `json:"fee_address"`              // Fee token address
+	FeeUnits      string `json:"fee_units"`                // Fee amount
+	FeePercent    string `json:"fee_percent"`              // Fee percentage (e.g., "0.3" for 0.3%)
+	MinAskUnits   string `json:"min_ask_units"`            // Minimum output after slippage
+	PriceImpact   string `json:"price_impact"`             // Price impact (e.g., "0.01" for 1%)
+	SwapRate      string `json:"swap_rate"`                // Exchange rate
 	RouterAddress string `json:"router_address,omitempty"` // DEX router address
 }
 

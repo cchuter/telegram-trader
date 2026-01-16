@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package integration
@@ -143,10 +144,10 @@ func TestDatabaseWalletSessionCRUD(t *testing.T) {
 
 	t.Run("Create wallet session", func(t *testing.T) {
 		session := &storage.WalletSession{
-			UserID:     userID,
-			WalletType: walletType,
-			Address:    "EQAbcd1234",
-			IsActive:   true,
+			UserID:               userID,
+			WalletType:           walletType,
+			Address:              "EQAbcd1234",
+			IsActive:             true,
 			TonConnectClientID:   "client123",
 			TonConnectPrivateKey: "encrypted_key_123",
 			TonConnectWalletID:   "wallet456",
@@ -355,8 +356,8 @@ func TestDatabaseConcurrentWrites(t *testing.T) {
 					Username: fmt.Sprintf("update_%d", updateID),
 				}
 
-				if err := db.SaveUserSession(ctx, updateSession); err != nil {
-					updateErrors <- err
+				if errUpdate := db.SaveUserSession(ctx, updateSession); errUpdate != nil {
+					updateErrors <- errUpdate
 				}
 			}(i)
 		}

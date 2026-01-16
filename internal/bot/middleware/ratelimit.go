@@ -58,8 +58,8 @@ func (rl *RateLimiter) getBucket(userID int64) *TokenBucket {
 	defer rl.mu.Unlock()
 
 	// Double-check after acquiring write lock
-	if bucket, exists := rl.buckets[userID]; exists {
-		return bucket
+	if bucketExisting, existsAgain := rl.buckets[userID]; existsAgain {
+		return bucketExisting
 	}
 
 	bucket = &TokenBucket{

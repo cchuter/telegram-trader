@@ -33,13 +33,13 @@ const (
 
 // TonConnectSession represents an active TonConnect session
 type TonConnectSession struct {
-	ClientID      string    // Hex-encoded client public key
-	PrivateKey    []byte    // Client's private key (32 bytes)
-	PublicKey     []byte    // Client's public key (32 bytes)
-	WalletID      string    // Wallet's public key (hex-encoded)
-	WalletAddress string    // Wallet address (UQ... or EQ...)
-	BridgeURL     string    // Bridge server URL
-	ManifestURL   string    // App manifest URL
+	ClientID      string // Hex-encoded client public key
+	PrivateKey    []byte // Client's private key (32 bytes)
+	PublicKey     []byte // Client's public key (32 bytes)
+	WalletID      string // Wallet's public key (hex-encoded)
+	WalletAddress string // Wallet address (UQ... or EQ...)
+	BridgeURL     string // Bridge server URL
+	ManifestURL   string // App manifest URL
 	CreatedAt     time.Time
 	Connected     bool
 
@@ -51,8 +51,8 @@ type TonConnectSession struct {
 
 // ConnectRequest represents the initial connection request
 type ConnectRequest struct {
-	ManifestURL string   `json:"manifestUrl"`
-	Items       []Item   `json:"items"`
+	ManifestURL string `json:"manifestUrl"`
+	Items       []Item `json:"items"`
 }
 
 // Item represents a requested permission item
@@ -69,23 +69,23 @@ type ConnectEvent struct {
 
 // Payload contains the wallet connection information
 type Payload struct {
-	Items []PayloadItem `json:"items"`
-	Device DeviceInfo   `json:"device"`
+	Items  []PayloadItem `json:"items"`
+	Device DeviceInfo    `json:"device"`
 }
 
 // PayloadItem contains account information
 type PayloadItem struct {
-	Name    string  `json:"name"`
-	Address string  `json:"address"`
-	Network string  `json:"network"`
-	PublicKey string `json:"publicKey"`
+	Name            string `json:"name"`
+	Address         string `json:"address"`
+	Network         string `json:"network"`
+	PublicKey       string `json:"publicKey"`
 	WalletStateInit string `json:"walletStateInit"`
 }
 
 // DeviceInfo contains device information
 type DeviceInfo struct {
-	Platform  string `json:"platform"`
-	AppName   string `json:"appName"`
+	Platform   string `json:"platform"`
+	AppName    string `json:"appName"`
 	AppVersion string `json:"appVersion"`
 }
 
@@ -368,7 +368,6 @@ func (tc *TonConnector) StopListening(session *TonConnectSession) {
 // sseReader reads Server-Sent Events from an io.Reader
 type sseReader struct {
 	reader io.Reader
-	buffer []byte
 }
 
 // ReadEvent reads the next SSE event

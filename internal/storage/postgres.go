@@ -176,11 +176,13 @@ func applyMigration(db *sql.DB, version int, migrationFunc func(*sql.Tx) error) 
 	if err != nil {
 		return fmt.Errorf("failed to start transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	// Run migration
-	if err := migrationFunc(tx); err != nil {
-		return fmt.Errorf("migration %d failed: %w", version, err)
+	if errMigrate := migrationFunc(tx); errMigrate != nil {
+		return fmt.Errorf("migration %d failed: %w", version, errMigrate)
 	}
 
 	// Record migration

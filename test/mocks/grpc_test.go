@@ -56,10 +56,10 @@ func TestMockGRPCClient_GetPrice(t *testing.T) {
 	// Set price
 	timestamp := time.Now().Unix()
 	priceResponse := &pb.PriceResponse{
-		Price:     "855.0",
-		Timestamp: timestamp,
-		Bid:       "854.5",
-		Ask:       "855.5",
+		Price:      "855.0",
+		Timestamp:  timestamp,
+		Bid:        "854.5",
+		Ask:        "855.5",
 		Volume_24H: "1000000.0",
 	}
 	client.SetPrice(pair, priceResponse)
