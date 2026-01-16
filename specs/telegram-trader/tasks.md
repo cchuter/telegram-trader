@@ -568,11 +568,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 14: Implement basic wallet connection UI for TonConnect
 
 **Do:**
-- [ ] Create `internal/wallet/manager.go` with Manager struct
-- [ ] Implement ConnectTonWallet() that generates placeholder TonConnect URL
-- [ ] Create /wallet command handler that sends TonConnect deep link
-- [ ] For POC: Accept any wallet address via /wallet <address> command instead of real TonConnect
-- [ ] Save wallet address to database in wallet_sessions table
+- [x] Create `internal/wallet/manager.go` with Manager struct
+- [x] Implement ConnectTonWallet() that generates placeholder TonConnect URL
+- [x] Create /wallet command handler that sends TonConnect deep link
+- [x] For POC: Accept any wallet address via /wallet <address> command instead of real TonConnect
+- [x] Save wallet address to database in wallet_sessions table
 
 **Files:**
 - `internal/wallet/manager.go` - create wallet manager
