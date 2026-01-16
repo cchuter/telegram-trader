@@ -1,0 +1,22 @@
+package storage
+
+import "time"
+
+// UserSession represents a Telegram user session
+type UserSession struct {
+	UserID    int64     `json:"user_id"`
+	ChatID    int64     `json:"chat_id"`
+	Username  string    `json:"username"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// WalletSession represents a connected wallet session
+type WalletSession struct {
+	UserID      int64     `json:"user_id"`
+	WalletType  string    `json:"wallet_type"` // "ton" or "gala"
+	Address     string    `json:"address"`
+	ConnectedAt time.Time `json:"connected_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	IsActive    bool      `json:"is_active"`
+}
