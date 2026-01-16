@@ -2050,13 +2050,13 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 49: Set up test infrastructure and mocks
 
 **Do:**
-- [ ] Install testify: `go get github.com/stretchr/testify`
-- [ ] Create `test/mocks/` directory with mock implementations
-- [ ] Create mock Database (in-memory)
-- [ ] Create mock TON client (test fixtures)
-- [ ] Create mock ston.fi client (hardcoded responses)
-- [ ] Create mock gRPC client
-- [ ] Create test helpers in `test/testutil/` for common setup
+- [x] Install testify: `go get github.com/stretchr/testify`
+- [x] Create `test/mocks/` directory with mock implementations
+- [x] Create mock Database (in-memory)
+- [x] Create mock TON client (test fixtures)
+- [x] Create mock ston.fi client (hardcoded responses)
+- [x] Create mock gRPC client
+- [x] Create test helpers in `test/testutil/` for common setup
 
 **Files:**
 - `test/mocks/database.go` - mock database
