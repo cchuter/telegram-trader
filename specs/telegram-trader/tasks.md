@@ -1011,11 +1011,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 25: Set up Docker Compose for local development
 
 **Do:**
-- [ ] Create `deployments/docker-compose.yml`
-- [ ] Add service definitions: bot-service, galachain-service, postgres
-- [ ] Configure environment variables from .env file
-- [ ] Set up volume mounts for logs/ directory
-- [ ] Add health checks for each service
+- [x] Create `deployments/docker-compose.yml`
+- [x] Add service definitions: bot-service, galachain-service, postgres
+- [x] Configure environment variables from .env file
+- [x] Set up volume mounts for logs/ directory
+- [x] Add health checks for each service
 
 **Files:**
 - `deployments/docker-compose.yml` - create docker compose config
