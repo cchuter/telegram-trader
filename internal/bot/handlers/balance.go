@@ -7,12 +7,13 @@ import (
 
 	"github.com/cchuter/telegram-trader/internal/errors"
 	"github.com/cchuter/telegram-trader/internal/galachain"
+	"github.com/cchuter/telegram-trader/internal/logging"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
 
 // HandleBalance handles the /balance command
-func HandleBalance(ctx context.Context, b *bot.Bot, update *models.Update, galaClient *galachain.Client) {
+func HandleBalance(ctx context.Context, b *bot.Bot, update *models.Update, galaClient *galachain.Client, logger *logging.Logger) {
 	// Hardcoded TON balance for POC
 	message := "TON: 10.0\n"
 
@@ -22,6 +23,9 @@ func HandleBalance(ctx context.Context, b *bot.Bot, update *models.Update, galaC
 		resp, err := galaClient.GetBalance(ctx, userID)
 		if err != nil {
 			botErr := errors.ErrBalanceFetchFailed(err)
+			logger.LogError(ctx, userID, update.Message.From.Username, err, "Balance fetch error", map[string]interface{}{
+				"chain": "galachain",
+			})
 			log.Printf("Balance fetch error: %v", botErr)
 			message += fmt.Sprintf("GALA: %s\nGTON: %s", botErr.GetUserMessage(), botErr.GetUserMessage())
 		} else {
@@ -49,6 +53,7 @@ func HandleBalance(ctx context.Context, b *bot.Bot, update *models.Update, galaC
 		Text:   message,
 	})
 	if err != nil {
+		logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Error sending balance message", nil)
 		log.Printf("Error sending balance message: %v", err)
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/cchuter/telegram-trader/internal/dex"
 	"github.com/cchuter/telegram-trader/internal/errors"
 	"github.com/cchuter/telegram-trader/internal/galachain"
+	"github.com/cchuter/telegram-trader/internal/logging"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
@@ -19,7 +20,7 @@ const (
 )
 
 // HandlePrice handles the /price command
-func HandlePrice(ctx context.Context, b *bot.Bot, update *models.Update, dexClient dex.Client, galaClient *galachain.Client) {
+func HandlePrice(ctx context.Context, b *bot.Bot, update *models.Update, dexClient dex.Client, galaClient *galachain.Client, logger *logging.Logger) {
 	var message string
 
 	// Fetch TON/GALA price from ston.fi
@@ -79,6 +80,14 @@ func HandlePrice(ctx context.Context, b *bot.Bot, update *models.Update, dexClie
 		Text:   message,
 	})
 	if err != nil {
+		logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Error sending price message", nil)
 		log.Printf("Error sending price message: %v", err)
+	} else {
+		// Log price check
+		logger.InfoContext(ctx, "Price check completed", map[string]interface{}{
+			"user_id":      update.Message.From.ID,
+			"stonfi_price": stonfiPrice,
+			"gswap_price":  gswapPrice,
+		})
 	}
 }

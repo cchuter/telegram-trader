@@ -970,11 +970,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 24: Implement basic logging infrastructure
 
 **Do:**
-- [ ] Create `internal/logging/logger.go` with Logger struct
-- [ ] Use standard library log for POC (console output)
-- [ ] Add Info(), Error(), Debug() methods
-- [ ] Log all commands, errors, and trades to console
-- [ ] Add logger to bot, clients, and handlers
+- [x] Create `internal/logging/logger.go` with Logger struct
+- [x] Use standard library log for POC (console output)
+- [x] Add Info(), Error(), Debug() methods
+- [x] Log all commands, errors, and trades to console
+- [x] Add logger to bot, clients, and handlers
 
 **Files:**
 - `internal/logging/logger.go` - create logger

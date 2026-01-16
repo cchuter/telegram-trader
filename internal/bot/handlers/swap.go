@@ -6,9 +6,11 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/cchuter/telegram-trader/internal/dex"
 	"github.com/cchuter/telegram-trader/internal/errors"
+	"github.com/cchuter/telegram-trader/internal/logging"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
@@ -19,7 +21,9 @@ const (
 )
 
 // HandleSwap handles the /swap command
-func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClient dex.Client) {
+func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClient dex.Client, logger *logging.Logger, tradeLogger *logging.TradeLogger) {
+	startTime := time.Now()
+
 	// Parse command arguments: /swap <amount> <from_token> <to_token> stonfi
 	messageText := update.Message.Text
 	parts := strings.Fields(messageText)
@@ -90,9 +94,21 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 			Text:   botErr.GetUserMessage(),
 		})
 		if sendErr != nil {
+			logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, sendErr, "Error sending swap error message", nil)
 			log.Printf("Error sending swap error message: %v", sendErr)
 		}
+		logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Swap simulation error", map[string]interface{}{
+			"from_token": fromToken,
+			"to_token":   toToken,
+			"amount":     amountStr,
+		})
 		log.Printf("Swap simulation error: %v", botErr)
+
+		// Log failed trade to trade log
+		executionTime := time.Since(startTime).Milliseconds()
+		if tradeLogger != nil {
+			tradeLogger.LogSwap(update.Message.From.ID, "ton", fromToken, toToken, amountStr, "0", "0", "", logging.TradeStatusFailed, executionTime, err.Error())
+		}
 		return
 	}
 
@@ -150,8 +166,38 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 		ReplyMarkup: keyboard,
 	})
 	if err != nil {
+		logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Error sending swap preview message", nil)
 		log.Printf("Error sending swap preview message: %v", err)
 	}
+
+	// Log simulated trade (POC mode - no actual execution)
+	executionTime := time.Since(startTime).Milliseconds()
+	if tradeLogger != nil {
+		tradeLogger.LogSwap(
+			update.Message.From.ID,
+			"ton",
+			fromToken,
+			toToken,
+			fmt.Sprintf("%.2f", amount),
+			fmt.Sprintf("%.2f", outputAmount),
+			fmt.Sprintf("%.2f", feeAmount),
+			"", // No tx hash in POC mode
+			logging.TradeStatusPending,
+			executionTime,
+			"",
+		)
+	}
+
+	// Log swap simulation details
+	logger.InfoContext(ctx, "Swap simulation completed", map[string]interface{}{
+		"user_id":          update.Message.From.ID,
+		"from_token":       fromToken,
+		"to_token":         toToken,
+		"amount_in":        amount,
+		"amount_out":       outputAmount,
+		"fee":              feeAmount,
+		"execution_time_ms": executionTime,
+	})
 }
 
 // tokenNameToAddress converts a token name to its address

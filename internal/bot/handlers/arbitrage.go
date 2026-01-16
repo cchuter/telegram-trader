@@ -8,12 +8,13 @@ import (
 
 	"github.com/cchuter/telegram-trader/internal/arbitrage"
 	"github.com/cchuter/telegram-trader/internal/errors"
+	"github.com/cchuter/telegram-trader/internal/logging"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
 
 // HandleArbitrage handles the /arbitrage command
-func HandleArbitrage(ctx context.Context, b *bot.Bot, update *models.Update, engine *arbitrage.Engine) {
+func HandleArbitrage(ctx context.Context, b *bot.Bot, update *models.Update, engine *arbitrage.Engine, logger *logging.Logger) {
 	// Send initial "Checking..." message
 	_, err := b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
@@ -32,8 +33,10 @@ func HandleArbitrage(ctx context.Context, b *bot.Bot, update *models.Update, eng
 			Text:   botErr.GetUserMessage(),
 		})
 		if sendErr != nil {
+			logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, sendErr, "Error sending error message", nil)
 			log.Printf("Error sending error message: %v", sendErr)
 		}
+		logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Arbitrage detection error", nil)
 		log.Printf("Arbitrage detection error: %v", botErr)
 		return
 	}
@@ -46,8 +49,12 @@ func HandleArbitrage(ctx context.Context, b *bot.Bot, update *models.Update, eng
 			Text:   message,
 		})
 		if err != nil {
+			logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Error sending no opportunity message", nil)
 			log.Printf("Error sending no opportunity message: %v", err)
 		}
+		logger.DebugContext(ctx, "No arbitrage opportunity found", map[string]interface{}{
+			"user_id": update.Message.From.ID,
+		})
 		return
 	}
 
@@ -99,6 +106,16 @@ func HandleArbitrage(ctx context.Context, b *bot.Bot, update *models.Update, eng
 		ReplyMarkup: keyboard,
 	})
 	if err != nil {
+		logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Error sending opportunity message", nil)
 		log.Printf("Error sending opportunity message: %v", err)
+	} else {
+		// Log arbitrage opportunity found
+		logger.InfoContext(ctx, "Arbitrage opportunity found", map[string]interface{}{
+			"user_id":      update.Message.From.ID,
+			"spread":       math.Abs(opportunity.Spread),
+			"stonfi_price": opportunity.StonfiPrice,
+			"gswap_price":  opportunity.GswapPrice,
+			"direction":    direction,
+		})
 	}
 }

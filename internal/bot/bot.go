@@ -9,6 +9,7 @@ import (
 	"github.com/cchuter/telegram-trader/internal/bot/middleware"
 	"github.com/cchuter/telegram-trader/internal/dex"
 	"github.com/cchuter/telegram-trader/internal/galachain"
+	"github.com/cchuter/telegram-trader/internal/logging"
 	"github.com/cchuter/telegram-trader/internal/storage"
 	"github.com/cchuter/telegram-trader/internal/wallet"
 	"github.com/go-telegram/bot"
@@ -17,18 +18,20 @@ import (
 
 // Bot represents the Telegram bot instance
 type Bot struct {
-	token          string
-	bot            *bot.Bot
-	db             storage.Database
-	authMiddleware *middleware.AuthMiddleware
-	walletManager  *wallet.Manager
-	dexClient      dex.Client
-	galaClient     *galachain.Client
+	token           string
+	bot             *bot.Bot
+	db              storage.Database
+	authMiddleware  *middleware.AuthMiddleware
+	walletManager   *wallet.Manager
+	dexClient       dex.Client
+	galaClient      *galachain.Client
 	arbitrageEngine *arbitrage.Engine
+	logger          *logging.Logger
+	tradeLogger     *logging.TradeLogger
 }
 
 // New creates a new Bot instance
-func New(token string, db storage.Database, adminUserIDs string, dexClient dex.Client, galaClient *galachain.Client) *Bot {
+func New(token string, db storage.Database, adminUserIDs string, dexClient dex.Client, galaClient *galachain.Client, logger *logging.Logger, tradeLogger *logging.TradeLogger) *Bot {
 	return &Bot{
 		token:           token,
 		db:              db,
@@ -37,6 +40,8 @@ func New(token string, db storage.Database, adminUserIDs string, dexClient dex.C
 		dexClient:       dexClient,
 		galaClient:      galaClient,
 		arbitrageEngine: arbitrage.NewEngine(dexClient, galaClient),
+		logger:          logger,
+		tradeLogger:     tradeLogger,
 	}
 }
 
@@ -62,6 +67,7 @@ func (b *Bot) Start(ctx context.Context) error {
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/price", bot.MatchTypeExact, b.handlePrice)
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/arbitrage", bot.MatchTypeExact, b.handleArbitrage)
 
+	b.logger.Info("Bot started successfully", nil)
 	log.Println("Bot started successfully")
 	b.bot.Start(ctx)
 
@@ -77,9 +83,13 @@ func (b *Bot) defaultHandler(ctx context.Context, botInstance *bot.Bot, update *
 func (b *Bot) handleStart(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
 	// Authenticate user
 	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
+		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Authentication failed", nil)
 		log.Printf("Authentication failed for user: %v", err)
 		return
 	}
+
+	// Log command execution
+	b.logger.LogCommand(ctx, update.Message.From.ID, update.Message.From.Username, "/start", nil)
 
 	message := `🚀 Welcome to GalaSwap & STON.fi Trading Bot!
 
@@ -102,6 +112,7 @@ Get started by connecting your wallet with /wallet`
 		Text:   message,
 	})
 	if err != nil {
+		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Error sending start message", nil)
 		log.Printf("Error sending start message: %v", err)
 	}
 }
@@ -110,9 +121,13 @@ Get started by connecting your wallet with /wallet`
 func (b *Bot) handleHelp(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
 	// Authenticate user
 	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
+		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Authentication failed", nil)
 		log.Printf("Authentication failed for user: %v", err)
 		return
 	}
+
+	// Log command execution
+	b.logger.LogCommand(ctx, update.Message.From.ID, update.Message.From.Username, "/help", nil)
 
 	message := `Available Commands:
 
@@ -132,6 +147,7 @@ For more information about a command, simply type it in the chat.`
 		Text:   message,
 	})
 	if err != nil {
+		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Error sending help message", nil)
 		log.Printf("Error sending help message: %v", err)
 	}
 }
@@ -140,58 +156,80 @@ For more information about a command, simply type it in the chat.`
 func (b *Bot) handleBalance(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
 	// Authenticate user
 	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
+		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Authentication failed", nil)
 		log.Printf("Authentication failed for user: %v", err)
 		return
 	}
 
+	// Log command execution
+	b.logger.LogCommand(ctx, update.Message.From.ID, update.Message.From.Username, "/balance", nil)
+
 	// Call the handler
-	handlers.HandleBalance(ctx, botInstance, update, b.galaClient)
+	handlers.HandleBalance(ctx, botInstance, update, b.galaClient, b.logger)
 }
 
 // handleWallet handles the /wallet command
 func (b *Bot) handleWallet(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
 	// Authenticate user
 	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
+		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Authentication failed", nil)
 		log.Printf("Authentication failed for user: %v", err)
 		return
 	}
 
+	// Log command execution
+	b.logger.LogCommand(ctx, update.Message.From.ID, update.Message.From.Username, "/wallet", nil)
+
 	// Call the handler
-	handlers.HandleWallet(ctx, botInstance, update, b.walletManager)
+	handlers.HandleWallet(ctx, botInstance, update, b.walletManager, b.logger)
 }
 
 // handleSwap handles the /swap command
 func (b *Bot) handleSwap(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
 	// Authenticate user
 	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
+		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Authentication failed", nil)
 		log.Printf("Authentication failed for user: %v", err)
 		return
 	}
 
+	// Log command execution
+	b.logger.LogCommand(ctx, update.Message.From.ID, update.Message.From.Username, "/swap", map[string]interface{}{
+		"full_command": update.Message.Text,
+	})
+
 	// Call the handler
-	handlers.HandleSwap(ctx, botInstance, update, b.dexClient)
+	handlers.HandleSwap(ctx, botInstance, update, b.dexClient, b.logger, b.tradeLogger)
 }
 
 // handlePrice handles the /price command
 func (b *Bot) handlePrice(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
 	// Authenticate user
 	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
+		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Authentication failed", nil)
 		log.Printf("Authentication failed for user: %v", err)
 		return
 	}
 
+	// Log command execution
+	b.logger.LogCommand(ctx, update.Message.From.ID, update.Message.From.Username, "/price", nil)
+
 	// Call the handler
-	handlers.HandlePrice(ctx, botInstance, update, b.dexClient, b.galaClient)
+	handlers.HandlePrice(ctx, botInstance, update, b.dexClient, b.galaClient, b.logger)
 }
 
 // handleArbitrage handles the /arbitrage command
 func (b *Bot) handleArbitrage(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
 	// Authenticate user
 	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
+		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Authentication failed", nil)
 		log.Printf("Authentication failed for user: %v", err)
 		return
 	}
 
+	// Log command execution
+	b.logger.LogCommand(ctx, update.Message.From.ID, update.Message.From.Username, "/arbitrage", nil)
+
 	// Call the handler
-	handlers.HandleArbitrage(ctx, botInstance, update, b.arbitrageEngine)
+	handlers.HandleArbitrage(ctx, botInstance, update, b.arbitrageEngine, b.logger)
 }

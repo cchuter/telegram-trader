@@ -11,6 +11,7 @@ import (
 	"github.com/cchuter/telegram-trader/internal/config"
 	"github.com/cchuter/telegram-trader/internal/dex/stonfi"
 	"github.com/cchuter/telegram-trader/internal/galachain"
+	"github.com/cchuter/telegram-trader/internal/logging"
 	"github.com/cchuter/telegram-trader/internal/storage"
 )
 
@@ -35,10 +36,26 @@ func main() {
 
 	log.Println("Database initialized successfully")
 
+	// Initialize logger
+	logger := logging.New("telegram-bot", logging.LogLevelInfo)
+	logger.Info("Logger initialized", nil)
+
+	// Initialize trade logger
+	tradeLogger, err := logging.NewTradeLogger("./logs")
+	if err != nil {
+		log.Fatalf("Failed to initialize trade logger: %v", err)
+	}
+	defer tradeLogger.Close()
+
+	logger.Info("Trade logger initialized", map[string]interface{}{
+		"log_dir": "./logs",
+	})
+
 	// Initialize DEX client (ston.fi)
 	dexClient := stonfi.NewClient()
 	defer dexClient.Close()
 
+	logger.Info("DEX client initialized", nil)
 	log.Println("DEX client initialized successfully")
 
 	// Create context that listens for interrupt signals
@@ -51,19 +68,30 @@ func main() {
 		var err error
 		galaClient, err = galachain.Connect(ctx, cfg.GalaChainServiceURL)
 		if err != nil {
+			logger.Warn("Failed to connect to GalaChain service, continuing without it", map[string]interface{}{
+				"error": err.Error(),
+			})
 			log.Printf("Warning: Failed to connect to GalaChain service: %v", err)
 			log.Println("Continuing without GalaChain service...")
 		} else {
 			defer galaClient.Close()
+			logger.Info("GalaChain client initialized", map[string]interface{}{
+				"service_url": cfg.GalaChainServiceURL,
+			})
 			log.Println("GalaChain client initialized successfully")
 		}
 	} else {
+		logger.Info("GALACHAIN_SERVICE_URL not set, continuing without GalaChain service", nil)
 		log.Println("GALACHAIN_SERVICE_URL not set, continuing without GalaChain service")
 	}
 
 	// Create and start the bot
-	b := bot.New(cfg.BotToken, db, cfg.BotAdminUserIDs, dexClient, galaClient)
+	b := bot.New(cfg.BotToken, db, cfg.BotAdminUserIDs, dexClient, galaClient, logger, tradeLogger)
+	logger.Info("Starting Telegram bot", map[string]interface{}{
+		"admin_user_ids": cfg.BotAdminUserIDs,
+	})
 	if err := b.Start(ctx); err != nil {
+		logger.Fatal("Failed to start bot", err, nil)
 		log.Fatalf("Failed to start bot: %v", err)
 	}
 }
