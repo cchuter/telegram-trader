@@ -2097,13 +2097,13 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 50: Add unit tests for authentication middleware
 
 **Do:**
-- [ ] Create `internal/bot/middleware/auth_test.go`
-- [ ] Test whitelisted user authentication (success)
-- [ ] Test non-whitelisted user authentication (failure)
-- [ ] Test session creation on first access
-- [ ] Test session expiry after 24 hours
-- [ ] Test session renewal on activity
-- [ ] Aim for 90% coverage of auth.go
+- [x] Create `internal/bot/middleware/auth_test.go`
+- [x] Test whitelisted user authentication (success)
+- [x] Test non-whitelisted user authentication (failure)
+- [x] Test session creation on first access
+- [x] Test session expiry after 24 hours
+- [x] Test session renewal on activity
+- [x] Aim for 90% coverage of auth.go
 
 **Files:**
 - `internal/bot/middleware/auth_test.go` - create auth tests

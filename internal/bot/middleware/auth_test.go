@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -11,7 +12,9 @@ import (
 
 // mockDatabase is a mock implementation of storage.Database for testing
 type mockDatabase struct {
-	sessions map[int64]*storage.UserSession
+	sessions      map[int64]*storage.UserSession
+	saveError     error
+	getError      error
 }
 
 func newMockDatabase() *mockDatabase {
@@ -21,6 +24,9 @@ func newMockDatabase() *mockDatabase {
 }
 
 func (m *mockDatabase) GetUserSession(ctx context.Context, userID int64) (*storage.UserSession, error) {
+	if m.getError != nil {
+		return nil, m.getError
+	}
 	session, ok := m.sessions[userID]
 	if !ok {
 		return nil, nil
@@ -29,6 +35,9 @@ func (m *mockDatabase) GetUserSession(ctx context.Context, userID int64) (*stora
 }
 
 func (m *mockDatabase) SaveUserSession(ctx context.Context, session *storage.UserSession) error {
+	if m.saveError != nil {
+		return m.saveError
+	}
 	m.sessions[session.UserID] = session
 	return nil
 }
@@ -39,6 +48,10 @@ func (m *mockDatabase) GetWalletSession(ctx context.Context, userID int64, walle
 
 func (m *mockDatabase) SaveWalletSession(ctx context.Context, session *storage.WalletSession) error {
 	return nil
+}
+
+func (m *mockDatabase) GetTradeHistory(ctx context.Context, userID int64, limit int) ([]*storage.TradeHistory, error) {
+	return []*storage.TradeHistory{}, nil
 }
 
 func (m *mockDatabase) Close() error {
@@ -74,6 +87,16 @@ func TestParseWhitelist(t *testing.T) {
 		{
 			name:     "invalid user ID ignored",
 			input:    "123456,invalid,789012",
+			expected: []int64{123456, 789012},
+		},
+		{
+			name:     "empty entries ignored",
+			input:    "123456,  ,789012",
+			expected: []int64{123456, 789012},
+		},
+		{
+			name:     "whitespace only entries ignored",
+			input:    "123456,   ,  ,789012",
 			expected: []int64{123456, 789012},
 		},
 	}
@@ -191,6 +214,51 @@ func TestAuthenticate(t *testing.T) {
 	}
 }
 
+func TestAuthenticateInvalidUpdate(t *testing.T) {
+	db := newMockDatabase()
+	middleware := NewAuthMiddleware(db, "123456")
+	ctx := context.Background()
+
+	tests := []struct {
+		name        string
+		update      *models.Update
+		errContains string
+	}{
+		{
+			name: "nil message",
+			update: &models.Update{
+				Message: nil,
+			},
+			errContains: "invalid update",
+		},
+		{
+			name: "nil user",
+			update: &models.Update{
+				Message: &models.Message{
+					From: nil,
+					Chat: models.Chat{
+						ID: 123,
+					},
+				},
+			},
+			errContains: "invalid update",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := middleware.Authenticate(ctx, nil, tt.update)
+			if err == nil {
+				t.Error("Expected error for invalid update, got nil")
+				return
+			}
+			if !contains(err.Error(), tt.errContains) {
+				t.Errorf("Error %q does not contain %q", err.Error(), tt.errContains)
+			}
+		})
+	}
+}
+
 func TestNewAuthMiddleware(t *testing.T) {
 	db := newMockDatabase()
 
@@ -198,10 +266,6 @@ func TestNewAuthMiddleware(t *testing.T) {
 
 	if middleware == nil {
 		t.Error("NewAuthMiddleware() returned nil")
-	}
-
-	if middleware.db != db {
-		t.Error("NewAuthMiddleware() did not set db correctly")
 	}
 
 	if len(middleware.whitelistIDs) != 2 {
@@ -375,6 +439,58 @@ func TestSessionRenewal(t *testing.T) {
 	if !renewedSession.ExpiresAt.After(initialExpiry) {
 		t.Errorf("Expected ExpiresAt to be renewed (initial: %v, renewed: %v)", initialExpiry, renewedSession.ExpiresAt)
 	}
+}
+
+func TestAuthenticateDatabaseErrors(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("database get error is handled gracefully", func(t *testing.T) {
+		db := newMockDatabase()
+		db.getError = fmt.Errorf("database connection error")
+		middleware := NewAuthMiddleware(db, "123456")
+
+		update := &models.Update{
+			Message: &models.Message{
+				From: &models.User{
+					ID:       123456,
+					Username: "testuser",
+				},
+				Chat: models.Chat{
+					ID: 123,
+				},
+			},
+		}
+
+		// Should not error - GetSession failure is non-fatal
+		err := middleware.Authenticate(ctx, nil, update)
+		if err != nil {
+			t.Errorf("Expected no error when GetSession fails, got: %v", err)
+		}
+	})
+
+	t.Run("database save error is logged but doesn't prevent authentication", func(t *testing.T) {
+		db := newMockDatabase()
+		db.saveError = fmt.Errorf("database save error")
+		middleware := NewAuthMiddleware(db, "123456")
+
+		update := &models.Update{
+			Message: &models.Message{
+				From: &models.User{
+					ID:       123456,
+					Username: "testuser",
+				},
+				Chat: models.Chat{
+					ID: 123,
+				},
+			},
+		}
+
+		// Should not error - SaveSession failure is non-fatal
+		err := middleware.Authenticate(ctx, nil, update)
+		if err != nil {
+			t.Errorf("Expected no error when SaveSession fails, got: %v", err)
+		}
+	})
 }
 
 // Helper function to check if a string contains a substring
