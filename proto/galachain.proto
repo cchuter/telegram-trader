@@ -1,0 +1,134 @@
+// proto/galachain.proto
+syntax = "proto3";
+
+package galachain;
+
+option go_package = "github.com/cchuter/telegram-trader/internal/galachain/pb";
+
+// GalaChain service for managing GalaChain operations
+service GalaChainService {
+  // Get current price for a trading pair
+  rpc GetPrice(GetPriceRequest) returns (PriceResponse);
+
+  // Get wallet balance
+  rpc GetBalance(BalanceRequest) returns (BalanceResponse);
+
+  // Execute a token swap
+  rpc ExecuteSwap(SwapRequest) returns (SwapResponse);
+
+  // Watch price updates (streaming)
+  rpc WatchPrices(WatchPricesRequest) returns (stream PriceUpdate);
+
+  // Create wallet connection session
+  rpc CreateWalletSession(WalletSessionRequest) returns (WalletSessionResponse);
+
+  // Health check
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+// Price request for a specific trading pair
+message GetPriceRequest {
+  string pair = 1;  // e.g., "GTON/GALA"
+}
+
+message PriceResponse {
+  string pair = 1;
+  string price = 2;  // Decimal string to avoid precision loss
+  int64 timestamp = 3;  // Unix timestamp
+  string bid = 4;  // Bid price
+  string ask = 5;  // Ask price
+  string volume_24h = 6;  // 24h volume
+}
+
+// Balance request for user wallet
+message BalanceRequest {
+  int64 user_id = 1;
+}
+
+message BalanceResponse {
+  repeated TokenBalance balances = 1;
+}
+
+message TokenBalance {
+  string token = 1;  // Token symbol
+  string balance = 2;  // Balance as decimal string
+  string usd_value = 3;  // USD value
+}
+
+// Swap execution request
+message SwapRequest {
+  int64 user_id = 1;
+  string from_token = 2;
+  string to_token = 3;
+  string amount = 4;  // Amount as decimal string
+  int32 slippage_bps = 5;  // Slippage in basis points (100 bps = 1%)
+  int32 fee_tier = 6;  // Optional fee tier override
+}
+
+message SwapResponse {
+  string tx_hash = 1;
+  string amount_in = 2;
+  string amount_out = 3;
+  string fee = 4;
+  string status = 5;  // "pending", "success", "failed"
+  string error_message = 6;  // If status = "failed"
+}
+
+// Watch prices request
+message WatchPricesRequest {
+  repeated string pairs = 1;  // Pairs to watch
+  int32 interval_ms = 2;  // Update interval in milliseconds
+}
+
+message PriceUpdate {
+  string pair = 1;
+  string price = 2;
+  int64 timestamp = 3;
+}
+
+// Wallet session creation
+message WalletSessionRequest {
+  int64 user_id = 1;
+  string method = 2;  // "walletconnect" or "manual"
+
+  // For manual method
+  optional string private_key = 3;
+  optional string public_key = 4;
+  optional string address = 5;
+}
+
+message WalletSessionResponse {
+  string session_id = 1;
+  string method = 2;
+
+  // For WalletConnect
+  optional string qr_code_uri = 3;
+  optional string deep_link = 4;
+
+  // For manual
+  optional string address = 5;
+
+  bool success = 6;
+  string error_message = 7;
+}
+
+// Health check
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  string status = 1;  // "healthy", "degraded", "unhealthy"
+  map<string, string> dependencies = 2;  // Dependency status
+  int64 uptime_seconds = 3;
+}
+
+// Error codes
+enum ErrorCode {
+  UNKNOWN = 0;
+  INVALID_REQUEST = 1;
+  WALLET_NOT_CONNECTED = 2;
+  INSUFFICIENT_BALANCE = 3;
+  SLIPPAGE_EXCEEDED = 4;
+  RATE_LIMIT_EXCEEDED = 5;
+  NETWORK_ERROR = 6;
+  TRANSACTION_FAILED = 7;
+}
