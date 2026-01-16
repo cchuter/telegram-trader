@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/cchuter/telegram-trader/internal/bot/handlers"
 	"github.com/cchuter/telegram-trader/internal/bot/middleware"
 	"github.com/cchuter/telegram-trader/internal/storage"
 	"github.com/go-telegram/bot"
@@ -43,6 +44,7 @@ func (b *Bot) Start(ctx context.Context) error {
 	// Register command handlers
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/start", bot.MatchTypeExact, b.handleStart)
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/help", bot.MatchTypeExact, b.handleHelp)
+	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/balance", bot.MatchTypeExact, b.handleBalance)
 
 	log.Println("Bot started successfully")
 	b.bot.Start(ctx)
@@ -116,4 +118,16 @@ For more information about a command, simply type it in the chat.`
 	if err != nil {
 		log.Printf("Error sending help message: %v", err)
 	}
+}
+
+// handleBalance handles the /balance command
+func (b *Bot) handleBalance(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Authenticate user
+	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
+		log.Printf("Authentication failed for user: %v", err)
+		return
+	}
+
+	// Call the handler
+	handlers.HandleBalance(ctx, botInstance, update)
 }

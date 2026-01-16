@@ -528,11 +528,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 13: Implement /balance command handler
 
 **Do:**
-- [ ] Create `internal/bot/handlers/balance.go`
-- [ ] Call TON client GetBalance() for TON and GALA tokens
-- [ ] Call GalaChain gRPC service GetBalance() for GALA and GTON tokens (stub for now)
-- [ ] Format response showing both chain balances
-- [ ] Register handler in bot.go
+- [x] Create `internal/bot/handlers/balance.go`
+- [x] Call TON client GetBalance() for TON and GALA tokens
+- [x] Call GalaChain gRPC service GetBalance() for GALA and GTON tokens (stub for now)
+- [x] Format response showing both chain balances
+- [x] Register handler in bot.go
 
 **Files:**
 - `internal/bot/handlers/balance.go` - create balance command handler
