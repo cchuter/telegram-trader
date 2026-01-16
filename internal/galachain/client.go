@@ -45,3 +45,17 @@ func (c *Client) Close() error {
 func (c *Client) GetClient() pb.GalaChainServiceClient {
 	return c.client
 }
+
+// GetBalance retrieves the balance for a user from GalaChain service
+func (c *Client) GetBalance(ctx context.Context, userID int64) (*pb.BalanceResponse, error) {
+	req := &pb.BalanceRequest{
+		UserId: userID,
+	}
+
+	resp, err := c.client.GetBalance(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get balance from galachain service: %w", err)
+	}
+
+	return resp, nil
+}

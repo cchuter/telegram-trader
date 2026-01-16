@@ -7,6 +7,7 @@ import (
 	"github.com/cchuter/telegram-trader/internal/bot/handlers"
 	"github.com/cchuter/telegram-trader/internal/bot/middleware"
 	"github.com/cchuter/telegram-trader/internal/dex"
+	"github.com/cchuter/telegram-trader/internal/galachain"
 	"github.com/cchuter/telegram-trader/internal/storage"
 	"github.com/cchuter/telegram-trader/internal/wallet"
 	"github.com/go-telegram/bot"
@@ -21,16 +22,18 @@ type Bot struct {
 	authMiddleware *middleware.AuthMiddleware
 	walletManager  *wallet.Manager
 	dexClient      dex.Client
+	galaClient     *galachain.Client
 }
 
 // New creates a new Bot instance
-func New(token string, db storage.Database, adminUserIDs string, dexClient dex.Client) *Bot {
+func New(token string, db storage.Database, adminUserIDs string, dexClient dex.Client, galaClient *galachain.Client) *Bot {
 	return &Bot{
 		token:          token,
 		db:             db,
 		authMiddleware: middleware.NewAuthMiddleware(db, adminUserIDs),
 		walletManager:  wallet.NewManager(db),
 		dexClient:      dexClient,
+		galaClient:     galaClient,
 	}
 }
 
@@ -137,7 +140,7 @@ func (b *Bot) handleBalance(ctx context.Context, botInstance *bot.Bot, update *m
 	}
 
 	// Call the handler
-	handlers.HandleBalance(ctx, botInstance, update)
+	handlers.HandleBalance(ctx, botInstance, update, b.galaClient)
 }
 
 // handleWallet handles the /wallet command
