@@ -1961,12 +1961,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 47: Add /disconnect command for wallet
 
 **Do:**
-- [ ] Create disconnect handler in `internal/bot/handlers/wallet.go`
-- [ ] Implement DisconnectWallet() in wallet manager
-- [ ] Delete wallet_sessions row from database
-- [ ] Clear encrypted private key from memory
-- [ ] Show confirmation message to user
-- [ ] Add inline keyboard [Confirm Disconnect] for destructive action
+- [x] Create disconnect handler in `internal/bot/handlers/wallet.go`
+- [x] Implement DisconnectWallet() in wallet manager
+- [x] Delete wallet_sessions row from database
+- [x] Clear encrypted private key from memory
+- [x] Show confirmation message to user
+- [x] Add inline keyboard [Confirm Disconnect] for destructive action
 
 **Files:**
 - `internal/bot/handlers/wallet.go` - add disconnect handler

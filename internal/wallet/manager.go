@@ -183,6 +183,33 @@ func (m *Manager) StopTonConnect(userID int64) {
 	m.mu.Unlock()
 }
 
+// DisconnectWallet disconnects a wallet for a user
+// Deletes the wallet session from database and clears encrypted keys from memory
+func (m *Manager) DisconnectWallet(ctx context.Context, userID int64, walletType string) error {
+	// Get the existing wallet session
+	session, err := m.db.GetWalletSession(ctx, userID, walletType)
+	if err != nil {
+		return fmt.Errorf("wallet not found: %w", err)
+	}
+
+	// Mark session as inactive and clear sensitive data
+	session.IsActive = false
+	session.TonConnectPrivateKey = "" // Clear encrypted private key
+	session.UpdatedAt = time.Now()
+
+	// Update database to mark inactive and clear keys
+	if err := m.db.SaveWalletSession(ctx, session); err != nil {
+		return fmt.Errorf("failed to update wallet session: %w", err)
+	}
+
+	// Stop any active TonConnect sessions in memory
+	if walletType == "ton" {
+		m.StopTonConnect(userID)
+	}
+
+	return nil
+}
+
 // GenerateTonConnectURL generates a placeholder TonConnect URL
 // Deprecated: Use InitiateTonConnect instead
 func (m *Manager) GenerateTonConnectURL() string {

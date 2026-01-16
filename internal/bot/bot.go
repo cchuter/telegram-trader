@@ -80,6 +80,7 @@ func (b *Bot) Start(ctx context.Context) error {
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/help", bot.MatchTypeExact, b.handleHelp)
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/balance", bot.MatchTypeExact, b.handleBalance)
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/wallet", bot.MatchTypePrefix, b.handleWallet)
+	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/disconnect", bot.MatchTypeExact, b.handleDisconnect)
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/swap", bot.MatchTypePrefix, b.handleSwap)
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/price", bot.MatchTypeExact, b.handlePrice)
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/arbitrage", bot.MatchTypeExact, b.handleArbitrage)
@@ -87,6 +88,7 @@ func (b *Bot) Start(ctx context.Context) error {
 	// Register callback handlers
 	b.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, "swap_", bot.MatchTypePrefix, b.handleSwapCallback)
 	b.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, "arbitrage_", bot.MatchTypePrefix, b.handleArbitrageCallback)
+	b.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, "disconnect_", bot.MatchTypePrefix, b.handleDisconnectCallback)
 
 	b.logger.Info("Bot started successfully", nil)
 	log.Println("Bot started successfully")
@@ -374,4 +376,51 @@ func (b *Bot) handleArbitrageCallback(ctx context.Context, botInstance *bot.Bot,
 
 	// Call the handler
 	handlers.HandleArbitrageCallback(ctx, botInstance, update, b.arbitrageExecutor, b.arbitrageEngine, b.logger, b.tradeLogger)
+}
+
+// handleDisconnect handles the /disconnect command
+func (b *Bot) handleDisconnect(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Generate correlation ID for this command
+	correlationID := logging.GenerateCorrelationID()
+	ctx = logging.ContextWithCorrelationID(ctx, correlationID)
+
+	// Apply rate limiting
+	if err := b.rateLimiter.Middleware(ctx, botInstance, update); err != nil {
+		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Rate limit exceeded", nil)
+		log.Printf("Rate limit exceeded for user: %v", err)
+		return
+	}
+
+	// Authenticate user
+	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
+		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Authentication failed", nil)
+		log.Printf("Authentication failed for user: %v", err)
+		return
+	}
+
+	// Log command execution
+	b.logger.LogCommand(ctx, update.Message.From.ID, update.Message.From.Username, "/disconnect", nil)
+
+	// Call the handler
+	handlers.HandleDisconnect(ctx, botInstance, update, b.walletManager, b.logger)
+}
+
+// handleDisconnectCallback handles callback queries from disconnect confirmation buttons
+func (b *Bot) handleDisconnectCallback(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Callback queries don't have Message, they have CallbackQuery
+	if update.CallbackQuery == nil {
+		return
+	}
+
+	// Generate correlation ID for this command
+	correlationID := logging.GenerateCorrelationID()
+	ctx = logging.ContextWithCorrelationID(ctx, correlationID)
+
+	// Log callback execution
+	b.logger.LogCommand(ctx, update.CallbackQuery.From.ID, update.CallbackQuery.From.Username, "disconnect_callback", map[string]interface{}{
+		"callback_data": update.CallbackQuery.Data,
+	})
+
+	// Call the handler
+	handlers.HandleDisconnectCallback(ctx, botInstance, update, b.walletManager, b.logger)
 }
