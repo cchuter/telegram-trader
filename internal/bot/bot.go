@@ -6,6 +6,7 @@ import (
 
 	"github.com/cchuter/telegram-trader/internal/bot/handlers"
 	"github.com/cchuter/telegram-trader/internal/bot/middleware"
+	"github.com/cchuter/telegram-trader/internal/dex"
 	"github.com/cchuter/telegram-trader/internal/storage"
 	"github.com/cchuter/telegram-trader/internal/wallet"
 	"github.com/go-telegram/bot"
@@ -19,15 +20,17 @@ type Bot struct {
 	db             storage.Database
 	authMiddleware *middleware.AuthMiddleware
 	walletManager  *wallet.Manager
+	dexClient      dex.Client
 }
 
 // New creates a new Bot instance
-func New(token string, db storage.Database, adminUserIDs string) *Bot {
+func New(token string, db storage.Database, adminUserIDs string, dexClient dex.Client) *Bot {
 	return &Bot{
 		token:          token,
 		db:             db,
 		authMiddleware: middleware.NewAuthMiddleware(db, adminUserIDs),
 		walletManager:  wallet.NewManager(db),
+		dexClient:      dexClient,
 	}
 }
 
@@ -49,6 +52,7 @@ func (b *Bot) Start(ctx context.Context) error {
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/help", bot.MatchTypeExact, b.handleHelp)
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/balance", bot.MatchTypeExact, b.handleBalance)
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/wallet", bot.MatchTypePrefix, b.handleWallet)
+	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/swap", bot.MatchTypePrefix, b.handleSwap)
 
 	log.Println("Bot started successfully")
 	b.bot.Start(ctx)
@@ -146,4 +150,16 @@ func (b *Bot) handleWallet(ctx context.Context, botInstance *bot.Bot, update *mo
 
 	// Call the handler
 	handlers.HandleWallet(ctx, botInstance, update, b.walletManager)
+}
+
+// handleSwap handles the /swap command
+func (b *Bot) handleSwap(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Authenticate user
+	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
+		log.Printf("Authentication failed for user: %v", err)
+		return
+	}
+
+	// Call the handler
+	handlers.HandleSwap(ctx, botInstance, update, b.dexClient)
 }

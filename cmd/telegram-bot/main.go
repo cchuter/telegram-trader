@@ -9,6 +9,7 @@ import (
 
 	"github.com/cchuter/telegram-trader/internal/bot"
 	"github.com/cchuter/telegram-trader/internal/config"
+	"github.com/cchuter/telegram-trader/internal/dex/stonfi"
 	"github.com/cchuter/telegram-trader/internal/storage"
 )
 
@@ -33,12 +34,18 @@ func main() {
 
 	log.Println("Database initialized successfully")
 
+	// Initialize DEX client (ston.fi)
+	dexClient := stonfi.NewClient()
+	defer dexClient.Close()
+
+	log.Println("DEX client initialized successfully")
+
 	// Create context that listens for interrupt signals
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
 	// Create and start the bot
-	b := bot.New(cfg.BotToken, db, cfg.BotAdminUserIDs)
+	b := bot.New(cfg.BotToken, db, cfg.BotAdminUserIDs, dexClient)
 	if err := b.Start(ctx); err != nil {
 		log.Fatalf("Failed to start bot: %v", err)
 	}
