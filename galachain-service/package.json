@@ -17,7 +17,9 @@
     "@gala-chain/gswap-sdk": "^0.0.10",
     "@grpc/grpc-js": "^1.14.3",
     "@grpc/proto-loader": "^0.8.0",
+    "@types/dotenv": "^6.1.1",
     "@types/node": "^25.0.9",
+    "dotenv": "^17.2.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
