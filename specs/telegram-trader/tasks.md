@@ -2441,12 +2441,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 58: Add integration test for ston.fi API
 
 **Do:**
-- [ ] Create `test/integration/stonfi_test.go`
-- [ ] Test real SimulateSwap API call (1 TON -> GALA)
-- [ ] Verify response parsing (amount, fee, slippage)
-- [ ] Test with different token pairs
-- [ ] Test error handling (invalid token, network error)
-- [ ] Mark as integration test (requires network)
+- [x] Create `test/integration/stonfi_test.go`
+- [x] Test real SimulateSwap API call (1 TON -> GALA)
+- [x] Verify response parsing (amount, fee, slippage)
+- [x] Test with different token pairs
+- [x] Test error handling (invalid token, network error)
+- [x] Mark as integration test (requires network)
 
 **Files:**
 - `test/integration/stonfi_test.go` - create ston.fi integration test
