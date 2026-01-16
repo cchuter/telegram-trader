@@ -2528,12 +2528,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 60: Add end-to-end wallet connection test
 
 **Do:**
-- [ ] Create `test/e2e/wallet_test.go`
-- [ ] Simulate user sending /wallet command
-- [ ] Verify bot response with TonConnect link
-- [ ] Simulate wallet connection callback (mock TonConnect bridge)
-- [ ] Verify wallet session saved to database
-- [ ] Verify confirmation message sent to user
+- [x] Create `test/e2e/wallet_test.go`
+- [x] Simulate user sending /wallet command
+- [x] Verify bot response with TonConnect link
+- [x] Simulate wallet connection callback (mock TonConnect bridge)
+- [x] Verify wallet session saved to database
+- [x] Verify confirmation message sent to user
 
 **Files:**
 - `test/e2e/wallet_test.go` - create e2e wallet test
