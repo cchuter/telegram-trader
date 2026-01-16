@@ -18,6 +18,9 @@ var initialSchemaMigration string
 //go:embed migrations/002_add_tonconnect_fields.up.sql
 var tonconnectFieldsMigration string
 
+//go:embed migrations/003_add_session_expiry.up.sql
+var sessionExpiryMigration string
+
 //go:embed migrations/004_trade_history.up.sql
 var tradeHistoryMigration string
 
@@ -66,6 +69,7 @@ func runMigrations(db *sql.DB) error {
 	migrations := []string{
 		initialSchemaMigration,
 		tonconnectFieldsMigration,
+		sessionExpiryMigration,
 		tradeHistoryMigration,
 	}
 
