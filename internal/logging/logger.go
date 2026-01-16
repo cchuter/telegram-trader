@@ -25,10 +25,21 @@ const (
 	LogLevelFatal LogLevel = "FATAL"
 )
 
+// LogFormat represents the output format for logs
+type LogFormat string
+
+const (
+	// LogFormatJSON outputs logs as JSON (default for production)
+	LogFormatJSON LogFormat = "json"
+	// LogFormatText outputs logs as human-readable text (for local dev)
+	LogFormatText LogFormat = "text"
+)
+
 // Logger provides structured logging capabilities
 type Logger struct {
 	serviceName string
 	level       LogLevel
+	format      LogFormat
 	logger      *log.Logger
 }
 
@@ -37,21 +48,30 @@ type LogEntry struct {
 	Timestamp     string                 `json:"timestamp"`
 	Level         string                 `json:"level"`
 	Service       string                 `json:"service"`
-	CorrelationID string                 `json:"correlation_id,omitempty"`
-	UserID        int64                  `json:"user_id,omitempty"`
-	Username      string                 `json:"username,omitempty"`
 	EventType     string                 `json:"event_type,omitempty"`
-	Command       string                 `json:"command,omitempty"`
+	UserID        int64                  `json:"user_id,omitempty"`
+	CorrelationID string                 `json:"correlation_id,omitempty"`
 	Message       string                 `json:"message"`
+	Username      string                 `json:"username,omitempty"`
+	Command       string                 `json:"command,omitempty"`
 	Error         string                 `json:"error,omitempty"`
 	Details       map[string]interface{} `json:"details,omitempty"`
 }
 
 // New creates a new Logger instance
 func New(serviceName string, level LogLevel) *Logger {
+	// Check LOG_FORMAT env var, default to json
+	format := LogFormatJSON
+	if envFormat := os.Getenv("LOG_FORMAT"); envFormat != "" {
+		if envFormat == "text" {
+			format = LogFormatText
+		}
+	}
+
 	return &Logger{
 		serviceName: serviceName,
 		level:       level,
+		format:      format,
 		logger:      log.New(os.Stdout, "", 0),
 	}
 }
@@ -204,15 +224,35 @@ func (l *Logger) logWithContext(level LogLevel, message, err string, details map
 	l.output(entry)
 }
 
-// output writes the log entry to stdout in JSON format
+// output writes the log entry to stdout in configured format
 func (l *Logger) output(entry LogEntry) {
-	jsonBytes, err := json.Marshal(entry)
-	if err != nil {
-		// Fallback to standard logger if JSON marshaling fails
-		l.logger.Printf("Failed to marshal log entry: %v", err)
-		return
+	if l.format == LogFormatJSON {
+		jsonBytes, err := json.Marshal(entry)
+		if err != nil {
+			// Fallback to standard logger if JSON marshaling fails
+			l.logger.Printf("Failed to marshal log entry: %v", err)
+			return
+		}
+		l.logger.Println(string(jsonBytes))
+	} else {
+		// Text format for local development
+		msg := fmt.Sprintf("[%s] %s %s: %s",
+			entry.Timestamp,
+			entry.Level,
+			entry.Service,
+			entry.Message,
+		)
+		if entry.Error != "" {
+			msg += fmt.Sprintf(" | error=%s", entry.Error)
+		}
+		if entry.CorrelationID != "" {
+			msg += fmt.Sprintf(" | correlation_id=%s", entry.CorrelationID)
+		}
+		if entry.UserID != 0 {
+			msg += fmt.Sprintf(" | user_id=%d", entry.UserID)
+		}
+		l.logger.Println(msg)
 	}
-	l.logger.Println(string(jsonBytes))
 }
 
 // shouldLog determines if a log level should be output based on configured level

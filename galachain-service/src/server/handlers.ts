@@ -2,7 +2,8 @@ import * as grpc from '@grpc/grpc-js';
 import * as messages from '../types/galachain_pb';
 import { GSwapClient } from '../gswap/client';
 import { WalletConnectManager, ManualWalletManager } from '../wallet/walletconnect';
-import { extractCorrelationID, createLogContext } from '../logging/correlation';
+import { extractCorrelationID } from '../logging/correlation';
+import { Logger, LogLevel } from '../logging/logger';
 
 /**
  * GrpcHandlers class implements the business logic for all gRPC service methods.
@@ -12,11 +13,13 @@ export class GrpcHandlers {
   private gswapClient: GSwapClient;
   private walletConnectManager: WalletConnectManager;
   private manualWalletManager: ManualWalletManager;
+  private logger: Logger;
 
   constructor(gswapApiUrl: string, walletConnectProjectId: string) {
     this.gswapClient = new GSwapClient(gswapApiUrl);
     this.walletConnectManager = new WalletConnectManager(walletConnectProjectId);
     this.manualWalletManager = new ManualWalletManager();
+    this.logger = new Logger('galachain-grpc-handlers', LogLevel.INFO);
   }
   /**
    * GetBalance handler - returns wallet balances for a user
@@ -28,8 +31,8 @@ export class GrpcHandlers {
   ): void {
     const correlationId = extractCorrelationID(call.metadata);
     const userId = call.request.getUserId();
-    const logContext = createLogContext(correlationId, { userId });
-    console.log(JSON.stringify({ ...logContext, message: 'GetBalance called', level: 'INFO' }));
+
+    this.logger.logWithContext(LogLevel.INFO, 'GetBalance called', correlationId, userId, 'get_balance');
 
     // Create response with hardcoded balances for POC
     const response = new messages.BalanceResponse();
@@ -62,8 +65,8 @@ export class GrpcHandlers {
   ): Promise<void> {
     const correlationId = extractCorrelationID(call.metadata);
     const pair = call.request.getPair();
-    const logContext = createLogContext(correlationId, { pair });
-    console.log(JSON.stringify({ ...logContext, message: 'GetPrice called', level: 'INFO' }));
+
+    this.logger.logWithContext(LogLevel.INFO, 'GetPrice called', correlationId, undefined, 'get_price', undefined, { pair });
 
     try {
       // Parse pair format (e.g., "GTON/GALA" -> token0: "GTON", token1: "GALA")
@@ -94,7 +97,7 @@ export class GrpcHandlers {
       callback(null, response);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      console.error(JSON.stringify({ ...logContext, message: 'Error in getPrice handler', level: 'ERROR', error: errorMsg }));
+      this.logger.logWithContext(LogLevel.ERROR, 'Error in getPrice handler', correlationId, undefined, 'get_price_error', errorMsg, { pair });
       callback(
         {
           code: grpc.status.INTERNAL,
@@ -121,8 +124,7 @@ export class GrpcHandlers {
     const slippageBps = call.request.getSlippageBps();
     const feeTier = call.request.getFeeTier() || 3000; // Default to 0.3% fee tier
 
-    const logContext = createLogContext(correlationId, { userId, fromToken, toToken, amount, slippageBps, feeTier });
-    console.log(JSON.stringify({ ...logContext, message: 'ExecuteSwap called', level: 'INFO' }));
+    this.logger.logWithContext(LogLevel.INFO, 'ExecuteSwap called', correlationId, userId, 'execute_swap', undefined, { fromToken, toToken, amount, slippageBps, feeTier });
 
     const response = new messages.SwapResponse();
 
@@ -171,12 +173,12 @@ export class GrpcHandlers {
         response.setErrorMessage(swapResult.errorMessage);
       }
 
-      console.log(JSON.stringify({ ...logContext, message: `Swap ${swapResult.status}`, level: 'INFO', txHash: swapResult.txHash, amountOut: swapResult.amountOut }));
+      this.logger.logWithContext(LogLevel.INFO, `Swap ${swapResult.status}`, correlationId, userId, 'swap_result', undefined, { txHash: swapResult.txHash, amountOut: swapResult.amountOut });
 
       callback(null, response);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      console.error(JSON.stringify({ ...logContext, message: 'Error in executeSwap handler', level: 'ERROR', error: errorMsg }));
+      this.logger.logWithContext(LogLevel.ERROR, 'Error in executeSwap handler', correlationId, userId, 'execute_swap_error', errorMsg);
       response.setTxHash('');
       response.setAmountIn('0.0');
       response.setAmountOut('0.0');
@@ -196,7 +198,8 @@ export class GrpcHandlers {
   public watchPrices(
     call: grpc.ServerWritableStream<messages.WatchPricesRequest, messages.PriceUpdate>
   ): void {
-    console.log(`WatchPrices called for pairs: ${call.request.getPairsList()}`);
+    const pairs = call.request.getPairsList();
+    this.logger.info('WatchPrices called', { pairs });
 
     // For now, just end the stream
     call.end();
@@ -213,7 +216,7 @@ export class GrpcHandlers {
     const userId = call.request.getUserId();
     const method = call.request.getMethod();
 
-    console.log(`CreateWalletSession called for user: ${userId}, method: ${method}`);
+    this.logger.info('CreateWalletSession called', { userId, method });
 
     const response = new messages.WalletSessionResponse();
     response.setMethod(method);
@@ -228,7 +231,7 @@ export class GrpcHandlers {
         response.setDeepLink(session.deepLink);
         response.setSuccess(true);
 
-        console.log(`WalletConnect session created for user ${userId}`);
+        this.logger.info('WalletConnect session created', { userId });
       } else if (method === 'manual') {
         // Manual private key method
         const privateKey = call.request.getPrivateKey();
@@ -254,7 +257,7 @@ export class GrpcHandlers {
         response.setAddress(wallet.address);
         response.setSuccess(true);
 
-        console.log(`Manual wallet stored for user ${userId}`);
+        this.logger.info('Manual wallet stored', { userId });
       } else {
         response.setSuccess(false);
         response.setErrorMessage(`Unknown method: ${method}. Use "walletconnect" or "manual"`);
@@ -264,7 +267,7 @@ export class GrpcHandlers {
 
       callback(null, response);
     } catch (error) {
-      console.error('Error in createWalletSession handler:', error);
+      this.logger.error('Error in createWalletSession handler', error instanceof Error ? error : String(error));
       response.setSuccess(false);
       response.setErrorMessage(error instanceof Error ? error.message : 'Unknown error');
       callback(null, response);
@@ -279,7 +282,7 @@ export class GrpcHandlers {
     callback: grpc.sendUnaryData<messages.HealthCheckResponse>,
     startTime: Date
   ): Promise<void> {
-    console.log('HealthCheck called');
+    this.logger.debug('HealthCheck called');
 
     const response = new messages.HealthCheckResponse();
 
@@ -305,7 +308,7 @@ export class GrpcHandlers {
 
       callback(null, response);
     } catch (error) {
-      console.error('Health check error:', error);
+      this.logger.error('Health check error', error instanceof Error ? error : String(error));
       response.setStatus('unhealthy');
       const dependencies = response.getDependenciesMap();
       dependencies.set('gswap_api', 'error');
@@ -324,7 +327,7 @@ export class GrpcHandlers {
       await this.gswapClient.getPrice('GTON', 'GALA');
       return true;
     } catch (error) {
-      console.error('GSwap API health check failed:', error);
+      this.logger.error('GSwap API health check failed', error instanceof Error ? error : String(error));
       return false;
     }
   }

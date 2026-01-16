@@ -245,7 +245,5 @@ func (h *HealthChecker) HTTPHandler() http.HandlerFunc {
 // StartHealthServer starts an HTTP server for health checks
 func (h *HealthChecker) StartHealthServer(port string) error {
 	http.HandleFunc("/health", h.HTTPHandler())
-
-	fmt.Printf("Health check server listening on :%s\n", port)
 	return http.ListenAndServe(":"+port, nil)
 }

@@ -2,8 +2,11 @@ import { GalaChainGrpcServer } from './server/grpc';
 import { HealthChecker } from './server/health';
 import { GSwapClient } from './gswap/client';
 import { loadConfig } from './config';
+import { Logger, LogLevel } from './logging/logger';
 
-console.log('GalaChain service starting');
+const logger = new Logger('galachain-service', LogLevel.INFO);
+
+logger.info('GalaChain service starting');
 
 async function main() {
   // Load configuration
@@ -26,13 +29,14 @@ async function main() {
   // Start health check HTTP server on port 8081
   const healthServer = await healthChecker.startHealthServer(8081);
 
-  console.log('GalaChain service initialized and running');
-  console.log('- gRPC server: port', config.GRPC_PORT);
-  console.log('- Health HTTP server: port 8081');
+  logger.info('GalaChain service initialized and running', {
+    grpc_port: config.GRPC_PORT,
+    health_port: 8081,
+  });
 
   // Handle graceful shutdown
   const shutdown = async () => {
-    console.log('Shutting down GalaChain service...');
+    logger.info('Shutting down GalaChain service...');
     await grpcServer.stop();
     healthServer.close();
     process.exit(0);
@@ -43,6 +47,5 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error('Failed to start GalaChain service:', error);
-  process.exit(1);
+  logger.fatal('Failed to start GalaChain service', error);
 });

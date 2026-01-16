@@ -1,5 +1,6 @@
 import * as http from 'http';
 import { GSwapClient } from '../gswap/client';
+import { Logger, LogLevel } from '../logging/logger';
 
 /**
  * Health status types
@@ -34,11 +35,13 @@ export class HealthChecker {
   private gswapClient: GSwapClient | null;
   private gswapApiUrl: string;
   private startTime: Date;
+  private logger: Logger;
 
   constructor(gswapApiUrl: string, gswapClient?: GSwapClient) {
     this.gswapApiUrl = gswapApiUrl;
     this.gswapClient = gswapClient || null;
     this.startTime = new Date();
+    this.logger = new Logger('health-checker', LogLevel.INFO);
   }
 
   /**
@@ -197,7 +200,7 @@ export class HealthChecker {
         res.writeHead(statusCode, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(health, null, 2));
       } catch (error) {
-        console.error('Health check failed:', error);
+        this.logger.error('Health check failed', error instanceof Error ? error : String(error));
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(
           JSON.stringify({
@@ -217,7 +220,7 @@ export class HealthChecker {
 
     return new Promise((resolve, reject) => {
       server.listen(port, () => {
-        console.log(`Health check server listening on port ${port}`);
+        this.logger.info('Health check server listening', { port });
         resolve(server);
       });
 

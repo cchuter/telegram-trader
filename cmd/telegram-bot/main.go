@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,37 +16,36 @@ import (
 )
 
 func main() {
+	// Initialize logger first (before config validation)
+	logger := logging.New("telegram-bot", logging.LogLevelInfo)
+
 	// Load configuration
 	cfg := config.Load()
 
 	// Validate required configuration
 	if cfg.BotToken == "" {
-		log.Fatal("BOT_TOKEN environment variable is required")
+		logger.Fatal("BOT_TOKEN environment variable is required", nil, nil)
 	}
 	if cfg.DatabaseURL == "" {
-		log.Fatal("DATABASE_URL environment variable is required")
+		logger.Fatal("DATABASE_URL environment variable is required", nil, nil)
 	}
 	if cfg.EncryptionKey == "" {
-		log.Fatal("ENCRYPTION_KEY environment variable is required")
+		logger.Fatal("ENCRYPTION_KEY environment variable is required", nil, nil)
 	}
 
 	// Initialize database (auto-detect SQLite vs PostgreSQL from URL)
 	db, err := storage.ParseDatabaseURL(cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
+		logger.Fatal("Failed to initialize database", err, nil)
 	}
 	defer db.Close()
 
-	log.Println("Database initialized successfully")
-
-	// Initialize logger
-	logger := logging.New("telegram-bot", logging.LogLevelInfo)
-	logger.Info("Logger initialized", nil)
+	logger.Info("Database initialized successfully", nil)
 
 	// Initialize trade logger
 	tradeLogger, err := logging.NewTradeLogger("./logs")
 	if err != nil {
-		log.Fatalf("Failed to initialize trade logger: %v", err)
+		logger.Fatal("Failed to initialize trade logger", err, nil)
 	}
 	defer tradeLogger.Close()
 
@@ -58,19 +56,17 @@ func main() {
 	// Initialize TON blockchain client
 	tonClient := ton.NewClient()
 	if err := tonClient.Connect(context.Background()); err != nil {
-		log.Fatalf("Failed to connect to TON blockchain: %v", err)
+		logger.Fatal("Failed to connect to TON blockchain", err, nil)
 	}
 	defer tonClient.Close()
 
 	logger.Info("TON blockchain client initialized", nil)
-	log.Println("TON blockchain client initialized successfully")
 
 	// Initialize DEX client (ston.fi)
 	dexClient := stonfi.NewClient()
 	defer dexClient.Close()
 
 	logger.Info("DEX client initialized", nil)
-	log.Println("DEX client initialized successfully")
 
 	// Create context that listens for interrupt signals
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -85,18 +81,14 @@ func main() {
 			logger.Warn("Failed to connect to GalaChain service, continuing without it", map[string]interface{}{
 				"error": err.Error(),
 			})
-			log.Printf("Warning: Failed to connect to GalaChain service: %v", err)
-			log.Println("Continuing without GalaChain service...")
 		} else {
 			defer galaClient.Close()
 			logger.Info("GalaChain client initialized", map[string]interface{}{
 				"service_url": cfg.GalaChainServiceURL,
 			})
-			log.Println("GalaChain client initialized successfully")
 		}
 	} else {
 		logger.Info("GALACHAIN_SERVICE_URL not set, continuing without GalaChain service", nil)
-		log.Println("GALACHAIN_SERVICE_URL not set, continuing without GalaChain service")
 	}
 
 	// Initialize health checker
@@ -105,10 +97,8 @@ func main() {
 	// Start health check HTTP server in a goroutine
 	go func() {
 		logger.Info("Starting health check server on port 8080", nil)
-		log.Println("Health check server starting on port 8080")
 		if err := healthChecker.StartHealthServer("8080"); err != nil {
 			logger.LogError(ctx, 0, "system", err, "Health check server failed", nil)
-			log.Printf("Health check server error: %v", err)
 		}
 	}()
 
@@ -116,13 +106,11 @@ func main() {
 	b, err := bot.New(cfg.BotToken, db, cfg.BotAdminUserIDs, cfg.EncryptionKey, dexClient, galaClient, logger, tradeLogger)
 	if err != nil {
 		logger.Fatal("Failed to create bot", err, nil)
-		log.Fatalf("Failed to create bot: %v", err)
 	}
 	logger.Info("Starting Telegram bot", map[string]interface{}{
 		"admin_user_ids": cfg.BotAdminUserIDs,
 	})
 	if err := b.Start(ctx); err != nil {
 		logger.Fatal("Failed to start bot", err, nil)
-		log.Fatalf("Failed to start bot: %v", err)
 	}
 }

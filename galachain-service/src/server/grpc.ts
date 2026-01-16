@@ -1,18 +1,21 @@
 import * as grpc from '@grpc/grpc-js';
 import { GalaChainServiceService, IGalaChainServiceServer } from '../types/galachain_grpc_pb';
 import { GrpcHandlers } from './handlers';
+import { Logger, LogLevel } from '../logging/logger';
 
 export class GalaChainGrpcServer {
   private server: grpc.Server;
   private port: number;
   private startTime: Date;
   private handlers: GrpcHandlers;
+  private logger: Logger;
 
   constructor(port: number = 50051, gswapApiUrl: string, walletConnectProjectId: string) {
     this.server = new grpc.Server();
     this.port = port;
     this.startTime = new Date();
     this.handlers = new GrpcHandlers(gswapApiUrl, walletConnectProjectId);
+    this.logger = new Logger('galachain-grpc-server', LogLevel.INFO);
     this.setupHandlers();
   }
 
@@ -41,7 +44,7 @@ export class GalaChainGrpcServer {
             return;
           }
 
-          console.log(`gRPC server started on port ${port}`);
+          this.logger.info('gRPC server started', { port });
           resolve();
         }
       );
@@ -52,7 +55,7 @@ export class GalaChainGrpcServer {
   public async stop(): Promise<void> {
     return new Promise((resolve) => {
       this.server.tryShutdown(() => {
-        console.log('gRPC server stopped');
+        this.logger.info('gRPC server stopped');
         resolve();
       });
     });
@@ -61,6 +64,6 @@ export class GalaChainGrpcServer {
   // Force stop the gRPC server
   public forceStop(): void {
     this.server.forceShutdown();
-    console.log('gRPC server force stopped');
+    this.logger.warn('gRPC server force stopped');
   }
 }

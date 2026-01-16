@@ -1788,11 +1788,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 43: Implement structured JSON logging
 
 **Do:**
-- [ ] Update `internal/logging/logger.go` to output JSON format
-- [ ] Include fields: timestamp, level, service, event_type, user_id, correlation_id, message
-- [ ] Replace fmt.Println with proper logger calls throughout codebase
-- [ ] Add LOG_FORMAT env var (json or text) for switching
-- [ ] Update TypeScript service logger to match JSON format
+- [x] Update `internal/logging/logger.go` to output JSON format
+- [x] Include fields: timestamp, level, service, event_type, user_id, correlation_id, message
+- [x] Replace fmt.Println with proper logger calls throughout codebase
+- [x] Add LOG_FORMAT env var (json or text) for switching
+- [x] Update TypeScript service logger to match JSON format
 
 **Files:**
 - `internal/logging/logger.go` - update to JSON format
