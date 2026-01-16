@@ -12,6 +12,7 @@ import (
 	"github.com/cchuter/telegram-trader/internal/dex"
 	"github.com/cchuter/telegram-trader/internal/errors"
 	"github.com/cchuter/telegram-trader/internal/logging"
+	"github.com/cchuter/telegram-trader/internal/validation"
 	"github.com/cchuter/telegram-trader/internal/wallet"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -73,6 +74,48 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 	toToken := strings.ToUpper(parts[3])
 	dexName := strings.ToLower(parts[4])
 
+	// Validate amount
+	amount, err := validation.ValidateAmount(amountStr)
+	if err != nil {
+		botErr := errors.ErrInvalidAmount()
+		message := botErr.GetUserMessage() + fmt.Sprintf(" (%v)", err)
+		_, sendErr := b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   message,
+		})
+		if sendErr != nil {
+			log.Printf("Error sending amount error message: %v", sendErr)
+		}
+		logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Invalid amount", map[string]interface{}{
+			"amount": amountStr,
+		})
+		return
+	}
+
+	// Validate token symbols
+	if err := validation.ValidateTokenSymbol(fromToken); err != nil {
+		message := fmt.Sprintf("Invalid token symbol: %s. %v", fromToken, err)
+		_, sendErr := b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   message,
+		})
+		if sendErr != nil {
+			log.Printf("Error sending token error message: %v", sendErr)
+		}
+		return
+	}
+	if err := validation.ValidateTokenSymbol(toToken); err != nil {
+		message := fmt.Sprintf("Invalid token symbol: %s. %v", toToken, err)
+		_, sendErr := b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   message,
+		})
+		if sendErr != nil {
+			log.Printf("Error sending token error message: %v", sendErr)
+		}
+		return
+	}
+
 	// Validate DEX name
 	if dexName != "stonfi" {
 		message := "Currently only 'stonfi' DEX is supported"
@@ -86,20 +129,8 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 		return
 	}
 
-	// Parse amount
-	amount, err := strconv.ParseFloat(amountStr, 64)
-	if err != nil || amount <= 0 {
-		botErr := errors.ErrInvalidAmount()
-		_, sendErr := b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: update.Message.Chat.ID,
-			Text:   botErr.GetUserMessage(),
-		})
-		if sendErr != nil {
-			log.Printf("Error sending amount error message: %v", sendErr)
-		}
-		log.Printf("Invalid amount error: %v", err)
-		return
-	}
+	// Convert amount to float for calculation
+	amountFloat, _ := amount.Float64()
 
 	// Convert token names to addresses
 	fromTokenAddr := tokenNameToAddress(fromToken)
@@ -108,7 +139,7 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 	// Convert amount to smallest units (nanotons for TON, similar for other tokens)
 	// For TON: 1 TON = 1e9 nanotons
 	// For simplicity, we multiply by 1e9 for all tokens
-	amountUnits := fmt.Sprintf("%.0f", amount*1e9)
+	amountUnits := fmt.Sprintf("%.0f", amountFloat*1e9)
 
 	// Call DEX to simulate swap
 	simulation, err := dexClient.SimulateSwap(ctx, fromTokenAddr, toTokenAddr, amountUnits)
@@ -132,7 +163,7 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 		// Log failed trade to trade log
 		executionTime := time.Since(startTime).Milliseconds()
 		if tradeLogger != nil {
-			tradeLogger.LogSwap(update.Message.From.ID, "ton", fromToken, toToken, amountStr, "0", "0", "", logging.TradeStatusFailed, executionTime, err.Error())
+			tradeLogger.LogSwap(update.Message.From.ID, "ton", fromToken, toToken, fmt.Sprintf("%.2f", amountFloat), "0", "0", "", logging.TradeStatusFailed, executionTime, err.Error())
 		}
 		return
 	}
@@ -161,7 +192,7 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 		UserID:         update.Message.From.ID,
 		FromToken:      fromToken,
 		ToToken:        toToken,
-		Amount:         fmt.Sprintf("%.2f", amount),
+		Amount:         fmt.Sprintf("%.2f", amountFloat),
 		AmountUnits:    amountUnits,
 		OutputAmount:   fmt.Sprintf("%.2f", outputAmount),
 		Fee:            fmt.Sprintf("%.2f", feeAmount),
@@ -184,7 +215,7 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 			"Price Impact: %.2f%%\n"+
 			"Slippage: %.2f%%\n\n"+
 			"Click Confirm to execute this swap on ston.fi.",
-		amount, fromToken,
+		amountFloat, fromToken,
 		outputAmount, toToken,
 		feeAmount,
 		simulation.PriceImpact,
@@ -226,7 +257,7 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 			"ton",
 			fromToken,
 			toToken,
-			fmt.Sprintf("%.2f", amount),
+			fmt.Sprintf("%.2f", amountFloat),
 			fmt.Sprintf("%.2f", outputAmount),
 			fmt.Sprintf("%.2f", feeAmount),
 			"", // No tx hash in POC mode
@@ -238,12 +269,12 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 
 	// Log swap simulation details
 	logger.InfoContext(ctx, "Swap simulation completed", map[string]interface{}{
-		"user_id":          update.Message.From.ID,
-		"from_token":       fromToken,
-		"to_token":         toToken,
-		"amount_in":        amount,
-		"amount_out":       outputAmount,
-		"fee":              feeAmount,
+		"user_id":           update.Message.From.ID,
+		"from_token":        fromToken,
+		"to_token":          toToken,
+		"amount_in":         amountFloat,
+		"amount_out":        outputAmount,
+		"fee":               feeAmount,
 		"execution_time_ms": executionTime,
 	})
 }

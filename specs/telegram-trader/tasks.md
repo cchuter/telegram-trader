@@ -1613,12 +1613,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 39: Add input validation for all commands
 
 **Do:**
-- [ ] Create `internal/bot/validation.go` with validation functions
-- [ ] Implement ValidateTonAddress() with checksum verification
-- [ ] Implement ValidateGalaAddress() with hex and length checks
-- [ ] Implement ValidateAmount() with positive check and decimal limit
-- [ ] Implement ValidateTokenSymbol() with whitelist (TON, GALA, GTON)
-- [ ] Update all command handlers to validate inputs before processing
+- [x] Create `internal/bot/validation.go` with validation functions
+- [x] Implement ValidateTonAddress() with checksum verification
+- [x] Implement ValidateGalaAddress() with hex and length checks
+- [x] Implement ValidateAmount() with positive check and decimal limit
+- [x] Implement ValidateTokenSymbol() with whitelist (TON, GALA, GTON)
+- [x] Update all command handlers to validate inputs before processing
 
 **Files:**
 - `internal/bot/validation.go` - create validation utilities
