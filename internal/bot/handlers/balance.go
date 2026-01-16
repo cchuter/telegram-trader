@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/cchuter/telegram-trader/internal/errors"
 	"github.com/cchuter/telegram-trader/internal/galachain"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -20,8 +21,9 @@ func HandleBalance(ctx context.Context, b *bot.Bot, update *models.Update, galaC
 		userID := update.Message.From.ID
 		resp, err := galaClient.GetBalance(ctx, userID)
 		if err != nil {
-			log.Printf("Error fetching GalaChain balance: %v", err)
-			message += "GALA: Error fetching balance\nGTON: Error fetching balance"
+			botErr := errors.ErrBalanceFetchFailed(err)
+			log.Printf("Balance fetch error: %v", botErr)
+			message += fmt.Sprintf("GALA: %s\nGTON: %s", botErr.GetUserMessage(), botErr.GetUserMessage())
 		} else {
 			// Parse balances from response
 			galaBalance := "0.0"

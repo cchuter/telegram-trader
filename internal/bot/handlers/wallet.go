@@ -6,6 +6,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/cchuter/telegram-trader/internal/errors"
 	"github.com/cchuter/telegram-trader/internal/wallet"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -37,14 +38,16 @@ func HandleWallet(ctx context.Context, b *bot.Bot, update *models.Update, wallet
 	userID := update.Message.From.ID
 	err := walletManager.ConnectTonWallet(ctx, userID, walletAddress)
 	if err != nil {
-		errorMsg := fmt.Sprintf("Failed to connect wallet: %v", err)
+		// Create user-friendly error message
+		botErr := errors.ErrWalletTimeout(err)
 		_, sendErr := b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
-			Text:   errorMsg,
+			Text:   botErr.GetUserMessage(),
 		})
 		if sendErr != nil {
 			log.Printf("Error sending error message: %v", sendErr)
 		}
+		log.Printf("Wallet connection error: %v", botErr)
 		return
 	}
 

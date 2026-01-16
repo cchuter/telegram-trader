@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/cchuter/telegram-trader/internal/dex"
+	"github.com/cchuter/telegram-trader/internal/errors"
 	"github.com/cchuter/telegram-trader/internal/galachain"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -26,8 +27,9 @@ func HandlePrice(ctx context.Context, b *bot.Bot, update *models.Update, dexClie
 	if dexClient != nil {
 		sim, err := dexClient.SimulateSwap(ctx, "TON", GALATokenAddress, OneTON)
 		if err != nil {
-			log.Printf("Error fetching ston.fi price: %v", err)
-			message = "Error fetching TON/GALA price from ston.fi\n"
+			botErr := errors.ErrPriceFetchFailed("ston.fi", err)
+			log.Printf("Price fetch error: %v", botErr)
+			message = fmt.Sprintf("%s\n", botErr.GetUserMessage())
 		} else {
 			// Convert output amount to GALA (assuming 9 decimals for GALA)
 			galaAmount, err := strconv.ParseFloat(sim.OutputAmount, 64)
@@ -48,8 +50,9 @@ func HandlePrice(ctx context.Context, b *bot.Bot, update *models.Update, dexClie
 	if galaClient != nil {
 		price, err := galaClient.GetPrice(ctx, "GTON/GALA")
 		if err != nil {
-			log.Printf("Error fetching GalaChain price: %v", err)
-			message += "Error fetching GTON/GALA price from gswap\n"
+			botErr := errors.ErrPriceFetchFailed("gswap", err)
+			log.Printf("Price fetch error: %v", botErr)
+			message += fmt.Sprintf("%s\n", botErr.GetUserMessage())
 		} else {
 			// Parse the price string to float
 			priceFloat, err := strconv.ParseFloat(price.Price, 64)

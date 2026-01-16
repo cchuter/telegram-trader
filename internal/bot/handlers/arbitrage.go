@@ -7,6 +7,7 @@ import (
 	"math"
 
 	"github.com/cchuter/telegram-trader/internal/arbitrage"
+	"github.com/cchuter/telegram-trader/internal/errors"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
@@ -25,14 +26,15 @@ func HandleArbitrage(ctx context.Context, b *bot.Bot, update *models.Update, eng
 	// Detect arbitrage opportunity
 	opportunity, err := engine.DetectOpportunity(ctx)
 	if err != nil {
-		errorMsg := fmt.Sprintf("Error checking for opportunities: %v", err)
+		botErr := errors.ErrNetworkError(err)
 		_, sendErr := b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
-			Text:   errorMsg,
+			Text:   botErr.GetUserMessage(),
 		})
 		if sendErr != nil {
 			log.Printf("Error sending error message: %v", sendErr)
 		}
+		log.Printf("Arbitrage detection error: %v", botErr)
 		return
 	}
 

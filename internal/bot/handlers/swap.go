@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/cchuter/telegram-trader/internal/dex"
+	"github.com/cchuter/telegram-trader/internal/errors"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
@@ -25,7 +26,8 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 
 	// Validate command format
 	if len(parts) < 5 {
-		message := "Usage: /swap <amount> <from_token> <to_token> stonfi\nExample: /swap 1 TON GALA stonfi"
+		botErr := errors.ErrInvalidCommandFormat()
+		message := botErr.GetUserMessage() + "\n\nUsage: /swap <amount> <from_token> <to_token> stonfi\nExample: /swap 1 TON GALA stonfi"
 		_, err := b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
 			Text:   message,
@@ -58,14 +60,15 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 	// Parse amount
 	amount, err := strconv.ParseFloat(amountStr, 64)
 	if err != nil || amount <= 0 {
-		message := "Invalid amount. Please provide a positive number."
+		botErr := errors.ErrInvalidAmount()
 		_, sendErr := b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
-			Text:   message,
+			Text:   botErr.GetUserMessage(),
 		})
 		if sendErr != nil {
 			log.Printf("Error sending amount error message: %v", sendErr)
 		}
+		log.Printf("Invalid amount error: %v", err)
 		return
 	}
 
@@ -81,14 +84,15 @@ func HandleSwap(ctx context.Context, b *bot.Bot, update *models.Update, dexClien
 	// Call DEX to simulate swap
 	simulation, err := dexClient.SimulateSwap(ctx, fromTokenAddr, toTokenAddr, amountUnits)
 	if err != nil {
-		errorMsg := fmt.Sprintf("Failed to simulate swap: %v", err)
+		botErr := errors.ErrSwapSimulationFailed(err)
 		_, sendErr := b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
-			Text:   errorMsg,
+			Text:   botErr.GetUserMessage(),
 		})
 		if sendErr != nil {
 			log.Printf("Error sending swap error message: %v", sendErr)
 		}
+		log.Printf("Swap simulation error: %v", botErr)
 		return
 	}
 

@@ -931,13 +931,13 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 23: Implement basic error handling and user-friendly messages
 
 **Do:**
-- [ ] Create `internal/bot/errors.go` with error types and user message mapping
-- [ ] Add error codes from design.md (AUTH_001, WALLET_001, SWAP_001, etc.)
-- [ ] Update command handlers to return errors instead of panicking
-- [ ] Format error messages for users with actionable guidance
+- [x] Create `internal/bot/errors.go` with error types and user message mapping
+- [x] Add error codes from design.md (AUTH_001, WALLET_001, SWAP_001, etc.)
+- [x] Update command handlers to return errors instead of panicking
+- [x] Format error messages for users with actionable guidance
 
 **Files:**
-- `internal/bot/errors.go` - create error types and messages
+- `internal/errors/errors.go` - create error types and messages (moved to avoid import cycle)
 
 **Done when:**
 - All error codes from design.md Error Handling section defined
