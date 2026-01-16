@@ -2140,13 +2140,13 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 51: Add unit tests for rate limiting
 
 **Do:**
-- [ ] Create `internal/bot/middleware/ratelimit_test.go`
-- [ ] Test token bucket algorithm (10 tokens, refill rate)
-- [ ] Test burst allowance (3 quick commands)
-- [ ] Test rate limit enforcement (11th command blocked)
-- [ ] Test token refill over time
-- [ ] Test per-user isolation (user A doesn't affect user B)
-- [ ] Aim for 90% coverage
+- [x] Create `internal/bot/middleware/ratelimit_test.go`
+- [x] Test token bucket algorithm (10 tokens, refill rate)
+- [x] Test burst allowance (3 quick commands)
+- [x] Test rate limit enforcement (11th command blocked)
+- [x] Test token refill over time
+- [x] Test per-user isolation (user A doesn't affect user B)
+- [x] Aim for 90% coverage
 
 **Files:**
 - `internal/bot/middleware/ratelimit_test.go` - create rate limit tests
