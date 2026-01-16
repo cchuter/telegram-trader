@@ -4,20 +4,26 @@ import (
 	"context"
 	"log"
 
+	"github.com/cchuter/telegram-trader/internal/bot/middleware"
+	"github.com/cchuter/telegram-trader/internal/storage"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
 
 // Bot represents the Telegram bot instance
 type Bot struct {
-	token string
-	bot   *bot.Bot
+	token          string
+	bot            *bot.Bot
+	db             storage.Database
+	authMiddleware *middleware.AuthMiddleware
 }
 
 // New creates a new Bot instance
-func New(token string) *Bot {
+func New(token string, db storage.Database, adminUserIDs string) *Bot {
 	return &Bot{
-		token: token,
+		token:          token,
+		db:             db,
+		authMiddleware: middleware.NewAuthMiddleware(db, adminUserIDs),
 	}
 }
 
@@ -51,6 +57,12 @@ func (b *Bot) defaultHandler(ctx context.Context, botInstance *bot.Bot, update *
 
 // handleStart handles the /start command
 func (b *Bot) handleStart(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Authenticate user
+	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
+		log.Printf("Authentication failed for user: %v", err)
+		return
+	}
+
 	message := `🚀 Welcome to GalaSwap & STON.fi Trading Bot!
 
 Trade tokens on GalaChain and TON blockchain with ease.
@@ -78,6 +90,12 @@ Get started by connecting your wallet with /wallet`
 
 // handleHelp handles the /help command
 func (b *Bot) handleHelp(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Authenticate user
+	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
+		log.Printf("Authentication failed for user: %v", err)
+		return
+	}
+
 	message := `Available Commands:
 
 /wallet - Connect your TonKeeper wallet

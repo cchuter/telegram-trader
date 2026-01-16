@@ -9,5 +9,6 @@ func Load() *Config {
 		DatabaseURL:         os.Getenv("DATABASE_URL"),
 		EncryptionKey:       os.Getenv("ENCRYPTION_KEY"),
 		GalaChainServiceURL: os.Getenv("GALACHAIN_SERVICE_URL"),
+		BotAdminUserIDs:     os.Getenv("BOT_ADMIN_USER_IDS"),
 	}
 }

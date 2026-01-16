@@ -6,4 +6,5 @@ type Config struct {
 	DatabaseURL         string
 	EncryptionKey       string
 	GalaChainServiceURL string
+	BotAdminUserIDs     string
 }
