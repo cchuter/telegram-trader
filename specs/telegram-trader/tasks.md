@@ -2876,11 +2876,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 68: Set up pre-commit hooks
 
 **Do:**
-- [ ] Install pre-commit: `pip install pre-commit` or use Go equivalent
-- [ ] Create `.pre-commit-config.yaml`
-- [ ] Add hooks: gofmt, golangci-lint, go test, eslint, prettier
-- [ ] Install hooks: `pre-commit install`
-- [ ] Test hooks work on commit
+- [x] Install pre-commit: `pip install pre-commit` or use Go equivalent
+- [x] Create `.pre-commit-config.yaml`
+- [x] Add hooks: gofmt, golangci-lint, go test, eslint, prettier
+- [x] Install hooks: `pre-commit install`
+- [x] Test hooks work on commit
 
 **Files:**
 - `.pre-commit-config.yaml` - create pre-commit configuration

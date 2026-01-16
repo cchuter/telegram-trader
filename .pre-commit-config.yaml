@@ -1,0 +1,93 @@
+# Pre-commit hooks for telegram-trader
+# Runs formatting, linting, and tests before each commit
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Local Go hooks
+  - repo: local
+    hooks:
+      - id: go-fmt
+        name: gofmt
+        description: Run gofmt to format Go code
+        entry: gofmt
+        language: system
+        types: [go]
+        args: [-w, -s]
+
+      - id: go-vet
+        name: go vet
+        description: Run go vet to check for common Go errors
+        entry: go vet
+        language: system
+        types: [go]
+        pass_filenames: false
+        args: [./...]
+
+      - id: golangci-lint
+        name: golangci-lint
+        description: Run golangci-lint on Go code
+        entry: bash -c 'if command -v golangci-lint >/dev/null 2>&1; then golangci-lint run ./...; elif [ -x ~/go/bin/golangci-lint ]; then ~/go/bin/golangci-lint run ./...; else echo "golangci-lint not found"; exit 1; fi'
+        language: system
+        types: [go]
+        pass_filenames: false
+
+      - id: go-test
+        name: go test
+        description: Run Go tests (excluding integration/e2e tests)
+        entry: go test
+        language: system
+        types: [go]
+        pass_filenames: false
+        args: [-short, -v, ./...]
+
+      - id: prettier
+        name: prettier
+        description: Format TypeScript/JavaScript files with Prettier
+        entry: bash -c 'for file in "$@"; do cd galachain-service && npx prettier --write "${file#galachain-service/}"; cd ..; done' --
+        language: system
+        types_or: [ts, tsx, javascript, jsx, json]
+        files: ^galachain-service/
+        exclude: ^galachain-service/src/types/
+        pass_filenames: true
+
+      - id: eslint
+        name: eslint
+        description: Lint TypeScript/JavaScript files with ESLint
+        entry: bash -c 'for file in "$@"; do cd galachain-service && npx eslint --fix "${file#galachain-service/}"; cd ..; done' --
+        language: system
+        types: [ts, tsx]
+        files: ^galachain-service/
+        exclude: ^galachain-service/src/types/
+        pass_filenames: true
+
+      - id: npm-test
+        name: npm test
+        description: Run TypeScript tests in galachain-service
+        entry: bash -c 'cd galachain-service && npm test'
+        language: system
+        types: [ts]
+        files: ^galachain-service/
+        exclude: ^galachain-service/src/types/
+        pass_filenames: false
+
+  # General hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+        name: trim trailing whitespace
+        description: Remove trailing whitespace
+      - id: end-of-file-fixer
+        name: fix end of files
+        description: Ensure files end with newline
+      - id: check-yaml
+        name: check yaml
+        description: Check YAML syntax
+      - id: check-added-large-files
+        name: check for large files
+        description: Prevent large files from being committed
+        args: [--maxkb=1000]
+      - id: check-merge-conflict
+        name: check for merge conflicts
+        description: Check for merge conflict markers
