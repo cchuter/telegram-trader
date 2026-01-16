@@ -360,11 +360,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 9: Set up SQLite database for development
 
 **Do:**
-- [ ] Add dependency: `go get github.com/mattn/go-sqlite3`
-- [ ] Create `internal/storage/db.go` with Database interface (GetUserSession, SaveUserSession, GetWalletSession, SaveWalletSession methods)
-- [ ] Create `internal/storage/sqlite.go` implementing Database interface
-- [ ] Create `migrations/001_initial_schema.up.sql` with user_sessions and wallet_sessions tables
-- [ ] Add InitDB() function that creates database file and runs migrations
+- [x] Add dependency: `go get github.com/mattn/go-sqlite3`
+- [x] Create `internal/storage/db.go` with Database interface (GetUserSession, SaveUserSession, GetWalletSession, SaveWalletSession methods)
+- [x] Create `internal/storage/sqlite.go` implementing Database interface
+- [x] Create `migrations/001_initial_schema.up.sql` with user_sessions and wallet_sessions tables
+- [x] Add InitDB() function that creates database file and runs migrations
 
 **Files:**
 - `internal/storage/db.go` - create database interface
