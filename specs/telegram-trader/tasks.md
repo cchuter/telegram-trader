@@ -2226,13 +2226,13 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 53: Add unit tests for encryption service
 
 **Do:**
-- [ ] Create `internal/wallet/encryption_test.go`
-- [ ] Test AES-256-GCM encryption/decryption
-- [ ] Test round-trip (encrypt then decrypt returns original)
-- [ ] Test different master keys produce different ciphertext
-- [ ] Test invalid ciphertext returns error on decrypt
-- [ ] Test nonce randomness (same plaintext -> different ciphertext)
-- [ ] Aim for 100% coverage (critical security component)
+- [x] Create `internal/wallet/encryption_test.go`
+- [x] Test AES-256-GCM encryption/decryption
+- [x] Test round-trip (encrypt then decrypt returns original)
+- [x] Test different master keys produce different ciphertext
+- [x] Test invalid ciphertext returns error on decrypt
+- [x] Test nonce randomness (same plaintext -> different ciphertext)
+- [x] Aim for 100% coverage (critical security component)
 
 **Files:**
 - `internal/wallet/encryption_test.go` - create encryption tests

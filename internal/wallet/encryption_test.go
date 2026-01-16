@@ -180,6 +180,47 @@ func TestEncryptionUniqueness(t *testing.T) {
 	}
 }
 
+func TestNonceRandomness(t *testing.T) {
+	masterKey := generateTestKey()
+	svc, err := NewEncryptionService(masterKey)
+	if err != nil {
+		t.Fatalf("Failed to create encryption service: %v", err)
+	}
+
+	plaintext := "test message for nonce randomness"
+
+	// Encrypt the same plaintext many times to verify nonce randomness
+	ciphertexts := make(map[string]bool)
+	iterations := 100
+
+	for i := 0; i < iterations; i++ {
+		ciphertext, err := svc.Encrypt(plaintext)
+		if err != nil {
+			t.Fatalf("Encrypt() iteration %d error = %v", i, err)
+		}
+
+		// Check if we've seen this ciphertext before
+		if ciphertexts[ciphertext] {
+			t.Errorf("Duplicate ciphertext found on iteration %d - nonce not random", i)
+		}
+		ciphertexts[ciphertext] = true
+
+		// Verify it still decrypts correctly
+		decrypted, err := svc.Decrypt(ciphertext)
+		if err != nil {
+			t.Fatalf("Decrypt() iteration %d error = %v", i, err)
+		}
+		if decrypted != plaintext {
+			t.Errorf("Decrypt() iteration %d mismatch: got %v, want %v", i, decrypted, plaintext)
+		}
+	}
+
+	// Verify we got unique ciphertexts for every iteration
+	if len(ciphertexts) != iterations {
+		t.Errorf("Expected %d unique ciphertexts, got %d", iterations, len(ciphertexts))
+	}
+}
+
 func TestDecryptInvalidInput(t *testing.T) {
 	masterKey := generateTestKey()
 	svc, err := NewEncryptionService(masterKey)
@@ -265,6 +306,92 @@ func TestDecryptWithDifferentKey(t *testing.T) {
 	_, err = svc2.Decrypt(ciphertext)
 	if err == nil {
 		t.Errorf("Decrypt() with different key should fail but succeeded")
+	}
+}
+
+func TestDifferentKeysDifferentCiphertext(t *testing.T) {
+	// Create two services with different keys
+	masterKey1 := generateTestKey()
+	svc1, err := NewEncryptionService(masterKey1)
+	if err != nil {
+		t.Fatalf("Failed to create first encryption service: %v", err)
+	}
+
+	masterKey2 := generateTestKey()
+	svc2, err := NewEncryptionService(masterKey2)
+	if err != nil {
+		t.Fatalf("Failed to create second encryption service: %v", err)
+	}
+
+	plaintext := "same plaintext for both services"
+
+	// Encrypt with both services
+	ciphertext1, err := svc1.Encrypt(plaintext)
+	if err != nil {
+		t.Fatalf("First Encrypt() error = %v", err)
+	}
+
+	ciphertext2, err := svc2.Encrypt(plaintext)
+	if err != nil {
+		t.Fatalf("Second Encrypt() error = %v", err)
+	}
+
+	// Verify different keys produce different ciphertext
+	if ciphertext1 == ciphertext2 {
+		t.Errorf("Different keys produced identical ciphertext")
+	}
+
+	// Verify each service can decrypt its own ciphertext
+	decrypted1, err := svc1.Decrypt(ciphertext1)
+	if err != nil {
+		t.Fatalf("First Decrypt() error = %v", err)
+	}
+	if decrypted1 != plaintext {
+		t.Errorf("First service decryption mismatch: got %v, want %v", decrypted1, plaintext)
+	}
+
+	decrypted2, err := svc2.Decrypt(ciphertext2)
+	if err != nil {
+		t.Fatalf("Second Decrypt() error = %v", err)
+	}
+	if decrypted2 != plaintext {
+		t.Errorf("Second service decryption mismatch: got %v, want %v", decrypted2, plaintext)
+	}
+}
+
+func TestTamperedCiphertextDetection(t *testing.T) {
+	masterKey := generateTestKey()
+	svc, err := NewEncryptionService(masterKey)
+	if err != nil {
+		t.Fatalf("Failed to create encryption service: %v", err)
+	}
+
+	plaintext := "sensitive data"
+	ciphertext, err := svc.Encrypt(plaintext)
+	if err != nil {
+		t.Fatalf("Encrypt() error = %v", err)
+	}
+
+	// Decode the base64 ciphertext
+	decoded, err := base64.StdEncoding.DecodeString(ciphertext)
+	if err != nil {
+		t.Fatalf("Failed to decode ciphertext: %v", err)
+	}
+
+	// Tamper with the ciphertext by flipping a bit in the middle
+	if len(decoded) > 20 {
+		decoded[20] ^= 1 // Flip one bit
+	}
+
+	tamperedCiphertext := base64.StdEncoding.EncodeToString(decoded)
+
+	// Attempt to decrypt tampered ciphertext
+	_, err = svc.Decrypt(tamperedCiphertext)
+	if err == nil {
+		t.Errorf("Decrypt() should fail on tampered ciphertext but succeeded")
+	}
+	if !strings.Contains(err.Error(), "failed to decrypt") {
+		t.Errorf("Decrypt() error = %v, want error containing 'failed to decrypt'", err)
 	}
 }
 
