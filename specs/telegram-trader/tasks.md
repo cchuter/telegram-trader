@@ -1306,11 +1306,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 32: Implement real gswap price fetching
 
 **Do:**
-- [ ] Update `galachain-service/src/gswap/client.ts` getPrice() to call real gswap API
-- [ ] Remove hardcoded price value
-- [ ] Parse pool data and calculate GTON/GALA price
-- [ ] Add 5-second TTL caching for prices
-- [ ] Implement proper rate limiting (20 requests per 10 seconds)
+- [x] Update `galachain-service/src/gswap/client.ts` getPrice() to call real gswap API
+- [x] Remove hardcoded price value
+- [x] Parse pool data and calculate GTON/GALA price
+- [x] Add 5-second TTL caching for prices
+- [x] Implement proper rate limiting (20 requests per 10 seconds)
 
 **Files:**
 - `galachain-service/src/gswap/client.ts` - update getPrice implementation

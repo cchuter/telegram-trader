@@ -3,10 +3,10 @@
  *
  * This client provides a simplified interface to the GSwap SDK
  * for querying token prices and swap data on GalaChain.
- *
- * POC Phase: Returns hardcoded prices for initial testing.
- * Future: Will integrate with real GSwap SDK for live data.
  */
+
+import { GSwap, parseTokenClassKey } from '@gala-chain/gswap-sdk';
+import { RateLimiter } from '../utils/rate-limiter';
 
 export interface PriceData {
   token0: string;
@@ -15,14 +15,32 @@ export interface PriceData {
   timestamp: number;
 }
 
+interface CachedPrice {
+  data: PriceData;
+  expiresAt: number;
+}
+
 export class GSwapClient {
   private readonly apiUrl: string;
-  private rateLimiterEnabled: boolean;
+  private readonly gswap: GSwap;
+  private readonly rateLimiter: RateLimiter;
+  private readonly priceCache: Map<string, CachedPrice> = new Map();
+  private readonly CACHE_TTL_MS = 5000; // 5 seconds
+  private readonly FEE_TIER = 3000; // 0.3% fee tier
 
   constructor(apiUrl: string) {
     this.apiUrl = apiUrl;
-    this.rateLimiterEnabled = false; // Placeholder for future implementation
-    // TODO: Initialize GSwap SDK with apiUrl in production
+
+    // Initialize GSwap SDK (read-only mode, no signer needed for price queries)
+    this.gswap = new GSwap({
+      gatewayBaseUrl: apiUrl,
+    });
+
+    // Initialize rate limiter: 20 requests per 10 seconds
+    this.rateLimiter = new RateLimiter({
+      maxRequests: 20,
+      windowMs: 10000, // 10 seconds
+    });
   }
 
   /**
@@ -36,47 +54,71 @@ export class GSwapClient {
   /**
    * Get the price for a token pair on GSwap
    *
-   * POC Phase: Returns hardcoded price of "855" for GTON/GALA pair
-   * This matches the expected price from the original goal/research.
+   * Fetches real-time price from GSwap API with caching and rate limiting.
+   * Price is calculated from pool reserves (sqrtPrice).
    *
    * @param token0 - First token symbol (e.g., "GTON")
    * @param token1 - Second token symbol (e.g., "GALA")
-   * @returns PriceData with hardcoded price
+   * @returns PriceData with current pool price
    */
   async getPrice(token0: string, token1: string): Promise<PriceData> {
-    // TODO: Rate limiting will be implemented here (20 req/10s from research)
-    if (this.rateLimiterEnabled) {
-      await this.checkRateLimit();
+    const cacheKey = `${token0}/${token1}`;
+
+    // Check cache first
+    const cached = this.priceCache.get(cacheKey);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data;
     }
 
-    // POC: Return hardcoded price for GTON/GALA
-    // In production, this will call the actual GSwap SDK
-    return {
-      token0,
-      token1,
-      price: "855", // Hardcoded for POC phase
-      timestamp: Date.now(),
-    };
+    // Apply rate limiting
+    await this.rateLimiter.acquire();
+
+    try {
+      // Parse token class keys
+      const token0ClassKey = parseTokenClassKey(`${token0}|Unit|none|none`);
+      const token1ClassKey = parseTokenClassKey(`${token1}|Unit|none|none`);
+
+      // Fetch pool data from GSwap API
+      const poolData = await this.gswap.pools.getPoolData(
+        token0ClassKey,
+        token1ClassKey,
+        this.FEE_TIER
+      );
+
+      // Calculate spot price from pool's sqrt price
+      const spotPrice = this.gswap.pools.calculateSpotPrice(
+        token0ClassKey,
+        token1ClassKey,
+        poolData.sqrtPrice
+      );
+
+      const priceData: PriceData = {
+        token0,
+        token1,
+        price: spotPrice.toFixed(0), // Convert to string, rounded to integer
+        timestamp: Date.now(),
+      };
+
+      // Cache the result
+      this.priceCache.set(cacheKey, {
+        data: priceData,
+        expiresAt: Date.now() + this.CACHE_TTL_MS,
+      });
+
+      return priceData;
+    } catch (error) {
+      throw new Error(
+        `Failed to fetch price for ${token0}/${token1}: ${error}`
+      );
+    }
   }
 
   /**
-   * Rate limiter placeholder
-   *
-   * Future: Implement 20 requests per 10 seconds limit
-   * as identified in research phase.
-   */
-  private async checkRateLimit(): Promise<void> {
-    // TODO: Implement actual rate limiting logic
-    // Research indicates 20 req/10s limit for GSwap API
-    return Promise.resolve();
-  }
-
-  /**
-   * Close any open connections
-   * Currently a no-op, but provided for future cleanup needs
+   * Close any open connections and clear cache
    */
   async close(): Promise<void> {
-    // No cleanup needed for POC phase
+    this.priceCache.clear();
+    this.rateLimiter.reset();
     return Promise.resolve();
   }
 }
