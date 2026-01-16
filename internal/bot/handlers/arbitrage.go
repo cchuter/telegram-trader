@@ -7,7 +7,9 @@ import (
 	"math"
 
 	"github.com/cchuter/telegram-trader/internal/arbitrage"
+	"github.com/cchuter/telegram-trader/internal/blockchain/ton"
 	"github.com/cchuter/telegram-trader/internal/errors"
+	"github.com/cchuter/telegram-trader/internal/galachain/pb"
 	"github.com/cchuter/telegram-trader/internal/logging"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -118,4 +120,163 @@ func HandleArbitrage(ctx context.Context, b *bot.Bot, update *models.Update, eng
 			"direction":    direction,
 		})
 	}
+}
+
+// HandleArbitrageCallback handles the inline keyboard callbacks for arbitrage execution
+func HandleArbitrageCallback(ctx context.Context, b *bot.Bot, update *models.Update, executor *arbitrage.Executor, engine *arbitrage.Engine, logger *logging.Logger) {
+	callback := update.CallbackQuery
+	if callback == nil {
+		return
+	}
+
+	// Handle cancel button
+	if callback.Data == "arbitrage_cancel" {
+		_, err := b.EditMessageText(ctx, &bot.EditMessageTextParams{
+			ChatID:    callback.Message.Message.Chat.ID,
+			MessageID: callback.Message.Message.ID,
+			Text:      "Arbitrage execution cancelled.",
+		})
+		if err != nil {
+			logger.LogError(ctx, callback.From.ID, callback.From.Username, err, "Error editing message", nil)
+		}
+		return
+	}
+
+	// Handle execute button
+	if callback.Data == "arbitrage_execute" {
+		// Update message to show execution in progress
+		_, err := b.EditMessageText(ctx, &bot.EditMessageTextParams{
+			ChatID:    callback.Message.Message.Chat.ID,
+			MessageID: callback.Message.Message.ID,
+			Text:      "Executing arbitrage... (both legs running concurrently)",
+		})
+		if err != nil {
+			logger.LogError(ctx, callback.From.ID, callback.From.Username, err, "Error editing message", nil)
+		}
+
+		// For POC: Re-detect opportunity (in production, store from previous detection)
+		opportunity, err := engine.DetectOpportunity(ctx)
+		if err != nil || opportunity == nil {
+			b.EditMessageText(ctx, &bot.EditMessageTextParams{
+				ChatID:    callback.Message.Message.Chat.ID,
+				MessageID: callback.Message.Message.ID,
+				Text:      "Arbitrage execution failed: opportunity no longer available.",
+			})
+			return
+		}
+
+		// Calculate position size (using mock balances for POC)
+		// In production, fetch actual balances from blockchain
+		tonBalance := 10.0  // Mock TON balance
+		galaBalance := 5000.0 // Mock GALA balance
+		position := engine.GetPositionSize(tonBalance, galaBalance, opportunity.Direction)
+
+		if !position.Valid {
+			b.EditMessageText(ctx, &bot.EditMessageTextParams{
+				ChatID:    callback.Message.Message.Chat.ID,
+				MessageID: callback.Message.Message.ID,
+				Text:      fmt.Sprintf("Arbitrage execution failed: %s", position.Reason),
+			})
+			return
+		}
+
+		// Execute arbitrage (using mock wallet credentials for POC)
+		// In production, retrieve actual wallet credentials from database
+		result := executor.ExecuteArbitrage(
+			ctx,
+			opportunity,
+			position,
+			callback.From.ID,
+			"mock_wallet_address", // In production: fetch from wallet manager
+			"mock_private_key",    // In production: decrypt from wallet manager
+		)
+
+		// Format result message
+		var resultMsg string
+		if result.Success {
+			resultMsg = fmt.Sprintf(
+				"✅ Arbitrage executed successfully!\n\n"+
+					"Ston.fi: %s (status: %s)\n"+
+					"Gswap: %s (status: %s)\n\n"+
+					"Profit: %.2f%%\n"+
+					"Execution time: %s",
+				result.StonfiResult.TxHash,
+				result.StonfiResult.Status,
+				result.GswapResult.TxHash,
+				result.GswapResult.Status,
+				result.Profit,
+				result.ExecutionTime.String(),
+			)
+		} else if result.PartialSuccess {
+			resultMsg = fmt.Sprintf(
+				"⚠️ Arbitrage partially executed (one leg failed)\n\n"+
+					"Ston.fi: %s (status: %s)\n"+
+					"Gswap: %s (status: %s)\n\n"+
+					"Error: %v\n"+
+					"Execution time: %s",
+				getResultHash(result.StonfiResult),
+				getResultStatus(result.StonfiResult),
+				getGswapHash(result.GswapResult),
+				getGswapStatus(result.GswapResult),
+				result.Error,
+				result.ExecutionTime.String(),
+			)
+		} else {
+			resultMsg = fmt.Sprintf(
+				"❌ Arbitrage execution failed\n\n"+
+					"Error: %v\n"+
+					"Execution time: %s",
+				result.Error,
+				result.ExecutionTime.String(),
+			)
+		}
+
+		// Update message with final result
+		_, err = b.EditMessageText(ctx, &bot.EditMessageTextParams{
+			ChatID:    callback.Message.Message.Chat.ID,
+			MessageID: callback.Message.Message.ID,
+			Text:      resultMsg,
+		})
+		if err != nil {
+			logger.LogError(ctx, callback.From.ID, callback.From.Username, err, "Error editing message with result", nil)
+		}
+
+		// Log arbitrage execution
+		logger.InfoContext(ctx, "Arbitrage execution completed", map[string]interface{}{
+			"user_id":        callback.From.ID,
+			"success":        result.Success,
+			"partial":        result.PartialSuccess,
+			"profit":         result.Profit,
+			"execution_time": result.ExecutionTime.String(),
+		})
+	}
+}
+
+// Helper functions to safely access result fields
+func getResultHash(result *ton.SwapResult) string {
+	if result == nil {
+		return "N/A"
+	}
+	return result.TxHash
+}
+
+func getResultStatus(result *ton.SwapResult) string {
+	if result == nil {
+		return "N/A"
+	}
+	return result.Status
+}
+
+func getGswapHash(result *pb.SwapResponse) string {
+	if result == nil {
+		return "N/A"
+	}
+	return result.TxHash
+}
+
+func getGswapStatus(result *pb.SwapResponse) string {
+	if result == nil {
+		return "N/A"
+	}
+	return result.Status
 }

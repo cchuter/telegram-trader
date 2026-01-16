@@ -1481,13 +1481,13 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 36: Implement arbitrage execution coordinator
 
 **Do:**
-- [ ] Create `internal/arbitrage/executor.go` with Executor struct
-- [ ] Implement ExecuteArbitrage() that runs both legs concurrently
-- [ ] Execute buy on ston.fi and sell on gswap in parallel
-- [ ] Wait for both transactions to complete
-- [ ] Handle partial success (one leg fails)
-- [ ] Calculate actual profit from completed transactions
-- [ ] Update /arbitrage handler to use executor
+- [x] Create `internal/arbitrage/executor.go` with Executor struct
+- [x] Implement ExecuteArbitrage() that runs both legs concurrently
+- [x] Execute buy on ston.fi and sell on gswap in parallel
+- [x] Wait for both transactions to complete
+- [x] Handle partial success (one leg fails)
+- [x] Calculate actual profit from completed transactions
+- [x] Update /arbitrage handler to use executor
 
 **Files:**
 - `internal/arbitrage/executor.go` - create arbitrage executor
