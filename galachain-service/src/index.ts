@@ -1,10 +1,29 @@
+import { GalaChainGrpcServer } from './server/grpc';
+import { loadConfig } from './config';
+
 console.log('GalaChain service starting');
 
-// Entry point for GalaChain service
-// Will implement gRPC server and GalaChain SDK integration
-
 async function main() {
-  console.log('GalaChain service initialized');
+  // Load configuration
+  const config = loadConfig();
+
+  // Initialize gRPC server
+  const grpcServer = new GalaChainGrpcServer(config.GRPC_PORT);
+
+  // Start the server
+  await grpcServer.start();
+
+  console.log('GalaChain service initialized and running');
+
+  // Handle graceful shutdown
+  const shutdown = async () => {
+    console.log('Shutting down GalaChain service...');
+    await grpcServer.stop();
+    process.exit(0);
+  };
+
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
 }
 
 main().catch((error) => {
