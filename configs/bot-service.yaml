@@ -1,0 +1,32 @@
+service:
+  name: telegram-bot
+  version: 1.0.0
+
+bot:
+  polling_timeout_seconds: 30
+  max_concurrent_updates: 100
+
+rate_limiting:
+  commands_per_minute: 10
+  burst_size: 5
+
+arbitrage:
+  spread_threshold_percent: 0.3
+  position_size_percent: 0.5
+  min_balance_ton: 1.0
+  min_balance_gala: 10.0
+
+wallet:
+  session_expiry_hours: 24
+
+trading:
+  default_slippage_bps: 500
+  max_slippage_bps: 1000
+
+monitoring:
+  health_check_interval_seconds: 30
+  metrics_enabled: true
+
+logging:
+  level: info
+  format: json

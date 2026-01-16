@@ -1,0 +1,27 @@
+service:
+  name: galachain-service
+  version: 1.0.0
+
+grpc:
+  port: 50051
+  max_connections: 100
+  keepalive_time_seconds: 30
+  keepalive_timeout_seconds: 10
+
+gswap:
+  api_url: https://api.gswap.gala.com
+  rate_limit_requests: 20
+  rate_limit_window_seconds: 10
+  price_cache_ttl_seconds: 5
+
+wallet:
+  session_expiry_hours: 24
+  max_sessions_per_user: 5
+
+monitoring:
+  health_check_interval_seconds: 30
+  metrics_enabled: true
+
+logging:
+  level: info
+  format: json

@@ -20,7 +20,10 @@ func main() {
 	logger := logging.New("telegram-bot", logging.LogLevelInfo)
 
 	// Load configuration
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		logger.Fatal("Failed to load configuration", err, nil)
+	}
 
 	// Validate required configuration
 	if cfg.BotToken == "" {
