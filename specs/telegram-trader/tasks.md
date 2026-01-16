@@ -317,11 +317,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 8: Implement basic Telegram bot with command routing
 
 **Do:**
-- [ ] Add dependency: `go get github.com/go-telegram/bot`
-- [ ] Create `internal/bot/bot.go` with Bot struct
-- [ ] Implement Start() method with bot initialization
-- [ ] Register /start and /help command handlers (hardcoded response strings for now)
-- [ ] Update `cmd/telegram-bot/main.go` to create bot and call Start()
+- [x] Add dependency: `go get github.com/go-telegram/bot`
+- [x] Create `internal/bot/bot.go` with Bot struct
+- [x] Implement Start() method with bot initialization
+- [x] Register /start and /help command handlers (hardcoded response strings for now)
+- [x] Update `cmd/telegram-bot/main.go` to create bot and call Start()
 
 **Files:**
 - `internal/bot/bot.go` - create bot instance
