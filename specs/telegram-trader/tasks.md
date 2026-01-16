@@ -689,10 +689,10 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 17: Connect Go bot to GalaChain gRPC service
 
 **Do:**
-- [ ] Update `internal/galachain/client.go` to implement GetBalance() method
-- [ ] Call pb.GalaChainServiceClient.GetBalance() over gRPC
-- [ ] Update /balance command handler to call GalaChain client
-- [ ] Display GALA and GTON balances from GalaChain service
+- [x] Update `internal/galachain/client.go` to implement GetBalance() method
+- [x] Call pb.GalaChainServiceClient.GetBalance() over gRPC
+- [x] Update /balance command handler to call GalaChain client
+- [x] Display GALA and GTON balances from GalaChain service
 
 **Files:**
 - `internal/galachain/client.go` - update with GetBalance method
