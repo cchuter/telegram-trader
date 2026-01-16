@@ -2616,14 +2616,14 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 62: Add end-to-end arbitrage test
 
 **Do:**
-- [ ] Create `test/e2e/arbitrage_test.go`
-- [ ] Use testnet with test wallets on both chains
-- [ ] Execute /arbitrage command
-- [ ] Verify opportunity detection
-- [ ] Simulate user clicking [Execute]
-- [ ] Verify both legs execute on testnet
-- [ ] Verify trade logging for arbitrage
-- [ ] Calculate actual profit/loss
+- [x] Create `test/e2e/arbitrage_test.go`
+- [x] Use testnet with test wallets on both chains
+- [x] Execute /arbitrage command
+- [x] Verify opportunity detection
+- [x] Simulate user clicking [Execute]
+- [x] Verify both legs execute on testnet
+- [x] Verify trade logging for arbitrage
+- [x] Calculate actual profit/loss
 
 **Files:**
 - `test/e2e/arbitrage_test.go` - create e2e arbitrage test
