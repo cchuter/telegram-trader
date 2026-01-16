@@ -732,10 +732,10 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 18: Implement GswapClient skeleton in TypeScript
 
 **Do:**
-- [ ] Install gswap SDK: `npm install @gala-chain/gswap-sdk`
-- [ ] Create `galachain-service/src/gswap/client.ts` with GSwapClient class
-- [ ] Add getPrice() method (returns hardcoded "855" for GTON/GALA for POC)
-- [ ] Add rate limiter placeholder (no actual rate limiting yet)
+- [x] Install gswap SDK: `npm install @gala-chain/gswap-sdk`
+- [x] Create `galachain-service/src/gswap/client.ts` with GSwapClient class
+- [x] Add getPrice() method (returns hardcoded "855" for GTON/GALA for POC)
+- [x] Add rate limiter placeholder (no actual rate limiting yet)
 
 **Files:**
 - `galachain-service/src/gswap/client.ts` - create GSwap client wrapper
