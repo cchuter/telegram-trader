@@ -810,11 +810,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 20: Implement /price command handler
 
 **Do:**
-- [ ] Create `internal/bot/handlers/price.go`
-- [ ] Fetch TON/GALA price from ston.fi (simulate 1 TON -> GALA)
-- [ ] Fetch GTON/GALA price from GalaChain service via gRPC
-- [ ] Calculate spread percentage: (price_gswap - price_stonfi) / price_stonfi * 100
-- [ ] Format response showing both prices and spread
+- [x] Create `internal/bot/handlers/price.go`
+- [x] Fetch TON/GALA price from ston.fi (simulate 1 TON -> GALA)
+- [x] Fetch GTON/GALA price from GalaChain service via gRPC
+- [x] Calculate spread percentage: (price_gswap - price_stonfi) / price_stonfi * 100
+- [x] Format response showing both prices and spread
 
 **Files:**
 - `internal/bot/handlers/price.go` - create price command handler
