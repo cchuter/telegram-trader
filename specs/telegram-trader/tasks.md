@@ -1053,11 +1053,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 26: Implement basic rate limiting
 
 **Do:**
-- [ ] Create `internal/bot/middleware/ratelimit.go` with RateLimiter struct
-- [ ] Implement token bucket algorithm (10 commands per minute per user)
-- [ ] Add Allow() method that checks token availability
-- [ ] Wire into bot middleware before command handlers
-- [ ] Return "Too many requests, please wait" error when limit exceeded
+- [x] Create `internal/bot/middleware/ratelimit.go` with RateLimiter struct
+- [x] Implement token bucket algorithm (10 commands per minute per user)
+- [x] Add Allow() method that checks token availability
+- [x] Wire into bot middleware before command handlers
+- [x] Return "Too many requests, please wait" error when limit exceeded
 
 **Files:**
 - `internal/bot/middleware/ratelimit.go` - create rate limiter

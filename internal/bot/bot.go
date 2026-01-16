@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/cchuter/telegram-trader/internal/arbitrage"
 	"github.com/cchuter/telegram-trader/internal/bot/handlers"
@@ -22,6 +23,7 @@ type Bot struct {
 	bot             *bot.Bot
 	db              storage.Database
 	authMiddleware  *middleware.AuthMiddleware
+	rateLimiter     *middleware.RateLimiter
 	walletManager   *wallet.Manager
 	dexClient       dex.Client
 	galaClient      *galachain.Client
@@ -36,6 +38,7 @@ func New(token string, db storage.Database, adminUserIDs string, dexClient dex.C
 		token:           token,
 		db:              db,
 		authMiddleware:  middleware.NewAuthMiddleware(db, adminUserIDs),
+		rateLimiter:     middleware.NewRateLimiter(10, 1*time.Minute),
 		walletManager:   wallet.NewManager(db),
 		dexClient:       dexClient,
 		galaClient:      galaClient,
@@ -81,6 +84,13 @@ func (b *Bot) defaultHandler(ctx context.Context, botInstance *bot.Bot, update *
 
 // handleStart handles the /start command
 func (b *Bot) handleStart(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Apply rate limiting
+	if err := b.rateLimiter.Middleware(ctx, botInstance, update); err != nil {
+		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Rate limit exceeded", nil)
+		log.Printf("Rate limit exceeded for user: %v", err)
+		return
+	}
+
 	// Authenticate user
 	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
 		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Authentication failed", nil)
@@ -119,6 +129,13 @@ Get started by connecting your wallet with /wallet`
 
 // handleHelp handles the /help command
 func (b *Bot) handleHelp(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Apply rate limiting
+	if err := b.rateLimiter.Middleware(ctx, botInstance, update); err != nil {
+		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Rate limit exceeded", nil)
+		log.Printf("Rate limit exceeded for user: %v", err)
+		return
+	}
+
 	// Authenticate user
 	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
 		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Authentication failed", nil)
@@ -154,6 +171,13 @@ For more information about a command, simply type it in the chat.`
 
 // handleBalance handles the /balance command
 func (b *Bot) handleBalance(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Apply rate limiting
+	if err := b.rateLimiter.Middleware(ctx, botInstance, update); err != nil {
+		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Rate limit exceeded", nil)
+		log.Printf("Rate limit exceeded for user: %v", err)
+		return
+	}
+
 	// Authenticate user
 	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
 		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Authentication failed", nil)
@@ -170,6 +194,13 @@ func (b *Bot) handleBalance(ctx context.Context, botInstance *bot.Bot, update *m
 
 // handleWallet handles the /wallet command
 func (b *Bot) handleWallet(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Apply rate limiting
+	if err := b.rateLimiter.Middleware(ctx, botInstance, update); err != nil {
+		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Rate limit exceeded", nil)
+		log.Printf("Rate limit exceeded for user: %v", err)
+		return
+	}
+
 	// Authenticate user
 	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
 		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Authentication failed", nil)
@@ -186,6 +217,13 @@ func (b *Bot) handleWallet(ctx context.Context, botInstance *bot.Bot, update *mo
 
 // handleSwap handles the /swap command
 func (b *Bot) handleSwap(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Apply rate limiting
+	if err := b.rateLimiter.Middleware(ctx, botInstance, update); err != nil {
+		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Rate limit exceeded", nil)
+		log.Printf("Rate limit exceeded for user: %v", err)
+		return
+	}
+
 	// Authenticate user
 	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
 		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Authentication failed", nil)
@@ -204,6 +242,13 @@ func (b *Bot) handleSwap(ctx context.Context, botInstance *bot.Bot, update *mode
 
 // handlePrice handles the /price command
 func (b *Bot) handlePrice(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Apply rate limiting
+	if err := b.rateLimiter.Middleware(ctx, botInstance, update); err != nil {
+		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Rate limit exceeded", nil)
+		log.Printf("Rate limit exceeded for user: %v", err)
+		return
+	}
+
 	// Authenticate user
 	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
 		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Authentication failed", nil)
@@ -220,6 +265,13 @@ func (b *Bot) handlePrice(ctx context.Context, botInstance *bot.Bot, update *mod
 
 // handleArbitrage handles the /arbitrage command
 func (b *Bot) handleArbitrage(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Apply rate limiting
+	if err := b.rateLimiter.Middleware(ctx, botInstance, update); err != nil {
+		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Rate limit exceeded", nil)
+		log.Printf("Rate limit exceeded for user: %v", err)
+		return
+	}
+
 	// Authenticate user
 	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
 		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Authentication failed", nil)
