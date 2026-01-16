@@ -1179,11 +1179,11 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 29: Implement real TON balance checking via blockchain
 
 **Do:**
-- [ ] Update `internal/blockchain/ton/client.go` GetBalance() to call real TON blockchain
-- [ ] Use tonutils-go to fetch balance for wallet address
-- [ ] Handle both TON and GALA token balances on TON chain
-- [ ] Remove hardcoded balance values
-- [ ] Add error handling for network failures
+- [x] Update `internal/blockchain/ton/client.go` GetBalance() to call real TON blockchain
+- [x] Use tonutils-go to fetch balance for wallet address
+- [x] Handle both TON and GALA token balances on TON chain
+- [x] Remove hardcoded balance values
+- [x] Add error handling for network failures
 
 **Files:**
 - `internal/blockchain/ton/client.go` - update GetBalance implementation
