@@ -2269,12 +2269,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 54: Add unit tests for input validation
 
 **Do:**
-- [ ] Create `internal/bot/validation_test.go`
-- [ ] Test TON address validation (valid EQ/UQ, invalid prefix, bad checksum)
-- [ ] Test GalaChain address validation (valid hex 64-char, invalid length, non-hex)
-- [ ] Test amount validation (positive, negative, zero, too many decimals, non-numeric)
-- [ ] Test token symbol validation (whitelist, invalid symbols)
-- [ ] Aim for 90% coverage
+- [x] Create `internal/bot/validation_test.go`
+- [x] Test TON address validation (valid EQ/UQ, invalid prefix, bad checksum)
+- [x] Test GalaChain address validation (valid hex 64-char, invalid length, non-hex)
+- [x] Test amount validation (positive, negative, zero, too many decimals, non-numeric)
+- [x] Test token symbol validation (whitelist, invalid symbols)
+- [x] Aim for 90% coverage
 
 **Files:**
 - `internal/bot/validation_test.go` - create validation tests
