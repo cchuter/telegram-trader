@@ -59,3 +59,17 @@ func (c *Client) GetBalance(ctx context.Context, userID int64) (*pb.BalanceRespo
 
 	return resp, nil
 }
+
+// GetPrice retrieves the price for a trading pair from GalaChain service
+func (c *Client) GetPrice(ctx context.Context, pair string) (*pb.PriceResponse, error) {
+	req := &pb.GetPriceRequest{
+		Pair: pair,
+	}
+
+	resp, err := c.client.GetPrice(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get price from galachain service: %w", err)
+	}
+
+	return resp, nil
+}

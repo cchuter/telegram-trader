@@ -56,6 +56,7 @@ func (b *Bot) Start(ctx context.Context) error {
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/balance", bot.MatchTypeExact, b.handleBalance)
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/wallet", bot.MatchTypePrefix, b.handleWallet)
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/swap", bot.MatchTypePrefix, b.handleSwap)
+	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/price", bot.MatchTypeExact, b.handlePrice)
 
 	log.Println("Bot started successfully")
 	b.bot.Start(ctx)
@@ -165,4 +166,16 @@ func (b *Bot) handleSwap(ctx context.Context, botInstance *bot.Bot, update *mode
 
 	// Call the handler
 	handlers.HandleSwap(ctx, botInstance, update, b.dexClient)
+}
+
+// handlePrice handles the /price command
+func (b *Bot) handlePrice(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Authenticate user
+	if err := b.authMiddleware.Authenticate(ctx, botInstance, update); err != nil {
+		log.Printf("Authentication failed for user: %v", err)
+		return
+	}
+
+	// Call the handler
+	handlers.HandlePrice(ctx, botInstance, update, b.dexClient, b.galaClient)
 }
