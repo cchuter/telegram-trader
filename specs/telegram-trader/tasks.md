@@ -122,10 +122,10 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 3: Create gRPC protocol buffer definitions
 
 **Do:**
-- [ ] Create `proto/` directory at project root
-- [ ] Create `proto/galachain.proto` with service definitions from design.md
-- [ ] Add gRPC messages: GetPriceRequest, PriceResponse, BalanceRequest, BalanceResponse, SwapRequest, SwapResponse, WalletSessionRequest, WalletSessionResponse, HealthCheckRequest, HealthCheckResponse
-- [ ] Create `proto/README.md` documenting proto file and generation commands
+- [x] Create `proto/` directory at project root
+- [x] Create `proto/galachain.proto` with service definitions from design.md
+- [x] Add gRPC messages: GetPriceRequest, PriceResponse, BalanceRequest, BalanceResponse, SwapRequest, SwapResponse, WalletSessionRequest, WalletSessionResponse, HealthCheckRequest, HealthCheckResponse
+- [x] Create `proto/README.md` documenting proto file and generation commands
 
 **Files:**
 - `proto/galachain.proto` - create gRPC service definition
