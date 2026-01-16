@@ -161,10 +161,10 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 4: Generate Go gRPC code and set up client skeleton
 
 **Do:**
-- [ ] Install protoc-gen-go and protoc-gen-go-grpc: `go install google.golang.org/protobuf/cmd/protoc-gen-go@latest && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest`
-- [ ] Generate Go code: `protoc --go_out=. --go-grpc_out=. proto/galachain.proto`
-- [ ] Create `internal/galachain/client.go` with Client struct wrapping gRPC connection
-- [ ] Add basic Connect/Close methods (no retry logic yet)
+- [x] Install protoc-gen-go and protoc-gen-go-grpc: `go install google.golang.org/protobuf/cmd/protoc-gen-go@latest && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest`
+- [x] Generate Go code: `protoc --go_out=. --go-grpc_out=. proto/galachain.proto`
+- [x] Create `internal/galachain/client.go` with Client struct wrapping gRPC connection
+- [x] Add basic Connect/Close methods (no retry logic yet)
 
 **Files:**
 - `internal/galachain/pb/galachain.pb.go` - generate gRPC message types
