@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cchuter/telegram-trader/internal/dex"
+	"github.com/cchuter/telegram-trader/internal/utils"
 )
 
 const (
@@ -55,6 +56,7 @@ func NewClientWithURL(baseURL string) *Client {
 // fromToken: "TON" or token address
 // toToken: token address (e.g., EQBadmOayy7_bD18skopfOZw2kmTgDdBhXPVsuTQq1lalaBV for GALA)
 // amount: input amount in nanotons or smallest token unit
+// Uses retry logic with exponential backoff for network errors
 func (c *Client) SimulateSwap(ctx context.Context, fromToken, toToken, amount string) (*dex.SwapSimulation, error) {
 	// Normalize "TON" to the native TON address
 	if fromToken == "TON" {
@@ -64,47 +66,53 @@ func (c *Client) SimulateSwap(ctx context.Context, fromToken, toToken, amount st
 		toToken = TONAddress
 	}
 
-	// Build URL with query parameters
-	apiURL := fmt.Sprintf("%s/v1/swap/simulate", c.baseURL)
-	params := url.Values{}
-	params.Add("offer_address", fromToken)
-	params.Add("ask_address", toToken)
-	params.Add("units", amount)
-	params.Add("slippage_tolerance", "0.01") // 1% default slippage tolerance
+	var result *dex.SwapSimulation
+	err := utils.RetryWithBackoff(ctx, func(ctx context.Context) error {
+		// Build URL with query parameters
+		apiURL := fmt.Sprintf("%s/v1/swap/simulate", c.baseURL)
+		params := url.Values{}
+		params.Add("offer_address", fromToken)
+		params.Add("ask_address", toToken)
+		params.Add("units", amount)
+		params.Add("slippage_tolerance", "0.01") // 1% default slippage tolerance
 
-	fullURL := fmt.Sprintf("%s?%s", apiURL, params.Encode())
+		fullURL := fmt.Sprintf("%s?%s", apiURL, params.Encode())
 
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", fullURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
+		httpReq, err := http.NewRequestWithContext(ctx, "POST", fullURL, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create request: %w", err)
+		}
 
-	resp, err := c.httpClient.Do(httpReq)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute request: %w", err)
-	}
-	defer resp.Body.Close()
+		resp, err := c.httpClient.Do(httpReq)
+		if err != nil {
+			return fmt.Errorf("failed to execute request: %w", err)
+		}
+		defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response: %w", err)
-	}
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read response: %w", err)
+		}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
-	}
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
+		}
 
-	var simResp SwapSimulateResponse
-	if err := json.Unmarshal(body, &simResp); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
-	}
+		var simResp SwapSimulateResponse
+		if err := json.Unmarshal(body, &simResp); err != nil {
+			return fmt.Errorf("failed to unmarshal response: %w", err)
+		}
 
-	return &dex.SwapSimulation{
-		OutputAmount: simResp.AskUnits,
-		Fee:          simResp.FeeUnits,
-		Slippage:     simResp.SlippagePercentage(),
-		PriceImpact:  simResp.PriceImpactPercentage(),
-	}, nil
+		result = &dex.SwapSimulation{
+			OutputAmount: simResp.AskUnits,
+			Fee:          simResp.FeeUnits,
+			Slippage:     simResp.SlippagePercentage(),
+			PriceImpact:  simResp.PriceImpactPercentage(),
+		}
+		return nil
+	})
+
+	return result, err
 }
 
 // Close closes the HTTP client

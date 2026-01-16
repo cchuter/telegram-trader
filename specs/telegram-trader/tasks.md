@@ -1570,12 +1570,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 38: Improve error handling with retry logic
 
 **Do:**
-- [ ] Create `internal/utils/retry.go` with exponential backoff retry logic
-- [ ] Implement RetryWithBackoff() function (initial 1s, max 10s, 3 retries)
-- [ ] Add jitter to prevent thundering herd (random 0-500ms)
-- [ ] Update blockchain clients to use retry logic for network calls
-- [ ] Update DEX clients to use retry for API calls
-- [ ] Don't retry on user errors (invalid input, insufficient balance)
+- [x] Create `internal/utils/retry.go` with exponential backoff retry logic
+- [x] Implement RetryWithBackoff() function (initial 1s, max 10s, 3 retries)
+- [x] Add jitter to prevent thundering herd (random 0-500ms)
+- [x] Update blockchain clients to use retry logic for network calls
+- [x] Update DEX clients to use retry for API calls
+- [x] Don't retry on user errors (invalid input, insufficient balance)
 
 **Files:**
 - `internal/utils/retry.go` - create retry utility

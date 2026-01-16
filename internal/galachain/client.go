@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cchuter/telegram-trader/internal/galachain/pb"
+	"github.com/cchuter/telegram-trader/internal/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -47,29 +48,41 @@ func (c *Client) GetClient() pb.GalaChainServiceClient {
 }
 
 // GetBalance retrieves the balance for a user from GalaChain service
+// Uses retry logic with exponential backoff for network errors
 func (c *Client) GetBalance(ctx context.Context, userID int64) (*pb.BalanceResponse, error) {
 	req := &pb.BalanceRequest{
 		UserId: userID,
 	}
 
-	resp, err := c.client.GetBalance(ctx, req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get balance from galachain service: %w", err)
-	}
+	var result *pb.BalanceResponse
+	err := utils.RetryWithBackoff(ctx, func(ctx context.Context) error {
+		resp, err := c.client.GetBalance(ctx, req)
+		if err != nil {
+			return fmt.Errorf("failed to get balance from galachain service: %w", err)
+		}
+		result = resp
+		return nil
+	})
 
-	return resp, nil
+	return result, err
 }
 
 // GetPrice retrieves the price for a trading pair from GalaChain service
+// Uses retry logic with exponential backoff for network errors
 func (c *Client) GetPrice(ctx context.Context, pair string) (*pb.PriceResponse, error) {
 	req := &pb.GetPriceRequest{
 		Pair: pair,
 	}
 
-	resp, err := c.client.GetPrice(ctx, req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get price from galachain service: %w", err)
-	}
+	var result *pb.PriceResponse
+	err := utils.RetryWithBackoff(ctx, func(ctx context.Context) error {
+		resp, err := c.client.GetPrice(ctx, req)
+		if err != nil {
+			return fmt.Errorf("failed to get price from galachain service: %w", err)
+		}
+		result = resp
+		return nil
+	})
 
-	return resp, nil
+	return result, err
 }
