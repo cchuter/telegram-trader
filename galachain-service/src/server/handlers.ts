@@ -2,6 +2,7 @@ import * as grpc from '@grpc/grpc-js';
 import * as messages from '../types/galachain_pb';
 import { GSwapClient } from '../gswap/client';
 import { WalletConnectManager, ManualWalletManager } from '../wallet/walletconnect';
+import { extractCorrelationID, createLogContext } from '../logging/correlation';
 
 /**
  * GrpcHandlers class implements the business logic for all gRPC service methods.
@@ -25,8 +26,10 @@ export class GrpcHandlers {
     call: grpc.ServerUnaryCall<messages.BalanceRequest, messages.BalanceResponse>,
     callback: grpc.sendUnaryData<messages.BalanceResponse>
   ): void {
+    const correlationId = extractCorrelationID(call.metadata);
     const userId = call.request.getUserId();
-    console.log(`GetBalance called for user: ${userId}`);
+    const logContext = createLogContext(correlationId, { userId });
+    console.log(JSON.stringify({ ...logContext, message: 'GetBalance called', level: 'INFO' }));
 
     // Create response with hardcoded balances for POC
     const response = new messages.BalanceResponse();
@@ -57,8 +60,10 @@ export class GrpcHandlers {
     call: grpc.ServerUnaryCall<messages.GetPriceRequest, messages.PriceResponse>,
     callback: grpc.sendUnaryData<messages.PriceResponse>
   ): Promise<void> {
+    const correlationId = extractCorrelationID(call.metadata);
     const pair = call.request.getPair();
-    console.log(`GetPrice called for pair: ${pair}`);
+    const logContext = createLogContext(correlationId, { pair });
+    console.log(JSON.stringify({ ...logContext, message: 'GetPrice called', level: 'INFO' }));
 
     try {
       // Parse pair format (e.g., "GTON/GALA" -> token0: "GTON", token1: "GALA")
@@ -88,11 +93,12 @@ export class GrpcHandlers {
 
       callback(null, response);
     } catch (error) {
-      console.error('Error in getPrice handler:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error(JSON.stringify({ ...logContext, message: 'Error in getPrice handler', level: 'ERROR', error: errorMsg }));
       callback(
         {
           code: grpc.status.INTERNAL,
-          message: error instanceof Error ? error.message : 'Unknown error',
+          message: errorMsg,
         },
         null
       );
@@ -107,6 +113,7 @@ export class GrpcHandlers {
     call: grpc.ServerUnaryCall<messages.SwapRequest, messages.SwapResponse>,
     callback: grpc.sendUnaryData<messages.SwapResponse>
   ): Promise<void> {
+    const correlationId = extractCorrelationID(call.metadata);
     const userId = call.request.getUserId();
     const fromToken = call.request.getFromToken();
     const toToken = call.request.getToToken();
@@ -114,9 +121,8 @@ export class GrpcHandlers {
     const slippageBps = call.request.getSlippageBps();
     const feeTier = call.request.getFeeTier() || 3000; // Default to 0.3% fee tier
 
-    console.log(
-      `ExecuteSwap called for user ${userId}: ${amount} ${fromToken} -> ${toToken}, slippage: ${slippageBps}bps, fee tier: ${feeTier}`
-    );
+    const logContext = createLogContext(correlationId, { userId, fromToken, toToken, amount, slippageBps, feeTier });
+    console.log(JSON.stringify({ ...logContext, message: 'ExecuteSwap called', level: 'INFO' }));
 
     const response = new messages.SwapResponse();
 
@@ -165,13 +171,12 @@ export class GrpcHandlers {
         response.setErrorMessage(swapResult.errorMessage);
       }
 
-      console.log(
-        `Swap ${swapResult.status}: tx ${swapResult.txHash}, out: ${swapResult.amountOut}`
-      );
+      console.log(JSON.stringify({ ...logContext, message: `Swap ${swapResult.status}`, level: 'INFO', txHash: swapResult.txHash, amountOut: swapResult.amountOut }));
 
       callback(null, response);
     } catch (error) {
-      console.error('Error in executeSwap handler:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error(JSON.stringify({ ...logContext, message: 'Error in executeSwap handler', level: 'ERROR', error: errorMsg }));
       response.setTxHash('');
       response.setAmountIn('0.0');
       response.setAmountOut('0.0');

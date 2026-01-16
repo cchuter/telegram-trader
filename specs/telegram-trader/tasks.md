@@ -1744,12 +1744,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 42: Implement correlation ID tracking across services
 
 **Do:**
-- [ ] Create `internal/logging/correlation.go` for correlation ID generation
-- [ ] Generate UUID v4 correlation ID for each command
-- [ ] Pass correlation ID in gRPC metadata to GalaChain service
-- [ ] Extract correlation ID in TypeScript service
-- [ ] Include correlation ID in all log entries
-- [ ] Return correlation ID in error messages to users
+- [x] Create `internal/logging/correlation.go` for correlation ID generation
+- [x] Generate UUID v4 correlation ID for each command
+- [x] Pass correlation ID in gRPC metadata to GalaChain service
+- [x] Extract correlation ID in TypeScript service
+- [x] Include correlation ID in all log entries
+- [x] Return correlation ID in error messages to users
 
 **Files:**
 - `internal/logging/correlation.go` - create correlation ID utilities

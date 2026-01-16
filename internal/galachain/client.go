@@ -5,9 +5,11 @@ import (
 	"fmt"
 
 	"github.com/cchuter/telegram-trader/internal/galachain/pb"
+	"github.com/cchuter/telegram-trader/internal/logging"
 	"github.com/cchuter/telegram-trader/internal/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
 // Client wraps the gRPC connection to the GalaChain service
@@ -50,6 +52,9 @@ func (c *Client) GetClient() pb.GalaChainServiceClient {
 // GetBalance retrieves the balance for a user from GalaChain service
 // Uses retry logic with exponential backoff for network errors
 func (c *Client) GetBalance(ctx context.Context, userID int64) (*pb.BalanceResponse, error) {
+	// Add correlation ID to gRPC metadata
+	ctx = c.addCorrelationIDToMetadata(ctx)
+
 	req := &pb.BalanceRequest{
 		UserId: userID,
 	}
@@ -70,6 +75,9 @@ func (c *Client) GetBalance(ctx context.Context, userID int64) (*pb.BalanceRespo
 // GetPrice retrieves the price for a trading pair from GalaChain service
 // Uses retry logic with exponential backoff for network errors
 func (c *Client) GetPrice(ctx context.Context, pair string) (*pb.PriceResponse, error) {
+	// Add correlation ID to gRPC metadata
+	ctx = c.addCorrelationIDToMetadata(ctx)
+
 	req := &pb.GetPriceRequest{
 		Pair: pair,
 	}
@@ -85,4 +93,14 @@ func (c *Client) GetPrice(ctx context.Context, pair string) (*pb.PriceResponse, 
 	})
 
 	return result, err
+}
+
+// addCorrelationIDToMetadata adds the correlation ID from context to gRPC metadata
+func (c *Client) addCorrelationIDToMetadata(ctx context.Context) context.Context {
+	correlationID := logging.GetCorrelationIDFromContext(ctx)
+	if correlationID != "" {
+		md := metadata.Pairs("x-correlation-id", correlationID)
+		ctx = metadata.NewOutgoingContext(ctx, md)
+	}
+	return ctx
 }

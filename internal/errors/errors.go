@@ -67,10 +67,11 @@ const (
 
 // BotError represents an error that can be shown to users
 type BotError struct {
-	Code    ErrorCode
-	Message string
-	Params  map[string]string // For parameterized messages
-	Cause   error             // Original error for logging
+	Code          ErrorCode
+	Message       string
+	Params        map[string]string // For parameterized messages
+	Cause         error             // Original error for logging
+	CorrelationID string            // Correlation ID for request tracing
 }
 
 // Error implements the error interface
@@ -102,8 +103,18 @@ func NewBotErrorWithParams(code ErrorCode, params map[string]string, cause error
 }
 
 // GetUserMessage returns the user-friendly message for this error
+// If correlation ID is set, it's included in the message for support
 func (e *BotError) GetUserMessage() string {
+	if e.CorrelationID != "" {
+		return fmt.Sprintf("%s\n\nSupport ID: %s", e.Message, e.CorrelationID)
+	}
 	return e.Message
+}
+
+// SetCorrelationID sets the correlation ID for this error
+func (e *BotError) SetCorrelationID(correlationID string) *BotError {
+	e.CorrelationID = correlationID
+	return e
 }
 
 // getUserMessage returns a user-friendly message for the given error code

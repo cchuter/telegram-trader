@@ -229,13 +229,7 @@ func (l *Logger) shouldLog(level LogLevel) bool {
 
 // getCorrelationID extracts correlation ID from context
 func getCorrelationID(ctx context.Context) string {
-	if ctx == nil {
-		return ""
-	}
-	if id, ok := ctx.Value("correlation_id").(string); ok {
-		return id
-	}
-	return ""
+	return GetCorrelationIDFromContext(ctx)
 }
 
 // SanitizeAddress truncates wallet address for logging (security measure)

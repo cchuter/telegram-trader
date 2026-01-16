@@ -98,6 +98,10 @@ func (b *Bot) defaultHandler(ctx context.Context, botInstance *bot.Bot, update *
 
 // handleStart handles the /start command
 func (b *Bot) handleStart(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Generate correlation ID for this command
+	correlationID := logging.GenerateCorrelationID()
+	ctx = logging.ContextWithCorrelationID(ctx, correlationID)
+
 	// Apply rate limiting
 	if err := b.rateLimiter.Middleware(ctx, botInstance, update); err != nil {
 		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Rate limit exceeded", nil)
@@ -143,6 +147,10 @@ Get started by connecting your wallet with /wallet`
 
 // handleHelp handles the /help command
 func (b *Bot) handleHelp(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Generate correlation ID for this command
+	correlationID := logging.GenerateCorrelationID()
+	ctx = logging.ContextWithCorrelationID(ctx, correlationID)
+
 	// Apply rate limiting
 	if err := b.rateLimiter.Middleware(ctx, botInstance, update); err != nil {
 		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Rate limit exceeded", nil)
@@ -185,6 +193,10 @@ For more information about a command, simply type it in the chat.`
 
 // handleBalance handles the /balance command
 func (b *Bot) handleBalance(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Generate correlation ID for this command
+	correlationID := logging.GenerateCorrelationID()
+	ctx = logging.ContextWithCorrelationID(ctx, correlationID)
+
 	// Apply rate limiting
 	if err := b.rateLimiter.Middleware(ctx, botInstance, update); err != nil {
 		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Rate limit exceeded", nil)
@@ -208,6 +220,10 @@ func (b *Bot) handleBalance(ctx context.Context, botInstance *bot.Bot, update *m
 
 // handleWallet handles the /wallet command
 func (b *Bot) handleWallet(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Generate correlation ID for this command
+	correlationID := logging.GenerateCorrelationID()
+	ctx = logging.ContextWithCorrelationID(ctx, correlationID)
+
 	// Apply rate limiting
 	if err := b.rateLimiter.Middleware(ctx, botInstance, update); err != nil {
 		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Rate limit exceeded", nil)
@@ -231,6 +247,10 @@ func (b *Bot) handleWallet(ctx context.Context, botInstance *bot.Bot, update *mo
 
 // handleSwap handles the /swap command
 func (b *Bot) handleSwap(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Generate correlation ID for this command
+	correlationID := logging.GenerateCorrelationID()
+	ctx = logging.ContextWithCorrelationID(ctx, correlationID)
+
 	// Apply rate limiting
 	if err := b.rateLimiter.Middleware(ctx, botInstance, update); err != nil {
 		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Rate limit exceeded", nil)
@@ -256,6 +276,10 @@ func (b *Bot) handleSwap(ctx context.Context, botInstance *bot.Bot, update *mode
 
 // handlePrice handles the /price command
 func (b *Bot) handlePrice(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Generate correlation ID for this command
+	correlationID := logging.GenerateCorrelationID()
+	ctx = logging.ContextWithCorrelationID(ctx, correlationID)
+
 	// Apply rate limiting
 	if err := b.rateLimiter.Middleware(ctx, botInstance, update); err != nil {
 		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Rate limit exceeded", nil)
@@ -279,6 +303,10 @@ func (b *Bot) handlePrice(ctx context.Context, botInstance *bot.Bot, update *mod
 
 // handleArbitrage handles the /arbitrage command
 func (b *Bot) handleArbitrage(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Generate correlation ID for this command
+	correlationID := logging.GenerateCorrelationID()
+	ctx = logging.ContextWithCorrelationID(ctx, correlationID)
+
 	// Apply rate limiting
 	if err := b.rateLimiter.Middleware(ctx, botInstance, update); err != nil {
 		b.logger.LogError(ctx, update.Message.From.ID, update.Message.From.Username, err, "Rate limit exceeded", nil)
@@ -307,6 +335,10 @@ func (b *Bot) handleSwapCallback(ctx context.Context, botInstance *bot.Bot, upda
 		return
 	}
 
+	// Generate correlation ID for this command
+	correlationID := logging.GenerateCorrelationID()
+	ctx = logging.ContextWithCorrelationID(ctx, correlationID)
+
 	// Apply rate limiting (use CallbackQuery.From instead of Message.From)
 	// For callbacks, we need to construct a temporary update for middleware
 	// For now, skip middleware for callbacks and implement direct handling
@@ -326,6 +358,10 @@ func (b *Bot) handleArbitrageCallback(ctx context.Context, botInstance *bot.Bot,
 	if update.CallbackQuery == nil {
 		return
 	}
+
+	// Generate correlation ID for this command
+	correlationID := logging.GenerateCorrelationID()
+	ctx = logging.ContextWithCorrelationID(ctx, correlationID)
 
 	// Log callback execution
 	b.logger.LogCommand(ctx, update.CallbackQuery.From.ID, update.CallbackQuery.From.Username, "arbitrage_callback", map[string]interface{}{
