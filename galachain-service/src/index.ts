@@ -8,7 +8,7 @@ async function main() {
   const config = loadConfig();
 
   // Initialize gRPC server
-  const grpcServer = new GalaChainGrpcServer(config.GRPC_PORT);
+  const grpcServer = new GalaChainGrpcServer(config.GRPC_PORT, config.GSWAP_API_URL);
 
   // Start the server
   await grpcServer.start();

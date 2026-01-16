@@ -1,11 +1,17 @@
 import * as grpc from '@grpc/grpc-js';
 import * as messages from '../types/galachain_pb';
+import { GSwapClient } from '../gswap/client';
 
 /**
  * GrpcHandlers class implements the business logic for all gRPC service methods.
  * This separates handler logic from server setup for better maintainability.
  */
 export class GrpcHandlers {
+  private gswapClient: GSwapClient;
+
+  constructor(gswapApiUrl: string) {
+    this.gswapClient = new GSwapClient(gswapApiUrl);
+  }
   /**
    * GetBalance handler - returns wallet balances for a user
    * POC implementation: returns hardcoded balances
@@ -40,23 +46,52 @@ export class GrpcHandlers {
 
   /**
    * GetPrice handler - returns price for a trading pair
-   * TODO: Implement actual price fetching logic
+   * POC implementation: calls GSwapClient.getPrice() and returns mock price "855"
    */
-  public getPrice(
+  public async getPrice(
     call: grpc.ServerUnaryCall<messages.GetPriceRequest, messages.PriceResponse>,
     callback: grpc.sendUnaryData<messages.PriceResponse>
-  ): void {
-    console.log(`GetPrice called for pair: ${call.request.getPair()}`);
+  ): Promise<void> {
+    const pair = call.request.getPair();
+    console.log(`GetPrice called for pair: ${pair}`);
 
-    const response = new messages.PriceResponse();
-    response.setPair(call.request.getPair());
-    response.setPrice('0.0');
-    response.setTimestamp(Date.now());
-    response.setBid('0.0');
-    response.setAsk('0.0');
-    response.setVolume24h('0.0');
+    try {
+      // Parse pair format (e.g., "GTON/GALA" -> token0: "GTON", token1: "GALA")
+      const [token0, token1] = pair.split('/');
+      if (!token0 || !token1) {
+        callback(
+          {
+            code: grpc.status.INVALID_ARGUMENT,
+            message: 'Invalid pair format. Expected format: TOKEN0/TOKEN1',
+          },
+          null
+        );
+        return;
+      }
 
-    callback(null, response);
+      // Call GSwapClient to get price data
+      const priceData = await this.gswapClient.getPrice(token0, token1);
+
+      // Build and return PriceResponse
+      const response = new messages.PriceResponse();
+      response.setPair(pair);
+      response.setPrice(priceData.price);
+      response.setTimestamp(priceData.timestamp);
+      response.setBid('0.0'); // Not implemented in POC
+      response.setAsk('0.0'); // Not implemented in POC
+      response.setVolume24h('0.0'); // Not implemented in POC
+
+      callback(null, response);
+    } catch (error) {
+      console.error('Error in getPrice handler:', error);
+      callback(
+        {
+          code: grpc.status.INTERNAL,
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
+        null
+      );
+    }
   }
 
   /**
