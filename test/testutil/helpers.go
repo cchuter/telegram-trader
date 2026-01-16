@@ -107,8 +107,13 @@ func CreateTestTradeHistory(userID int64, tradeType string) *storage.TradeHistor
 		ExecutionTimeMs: 1500,
 		ProfitUSD:       "0.0",
 		CreatedAt:       time.Now(),
-		CompletedAt:     time.Now(),
+		CompletedAt:     timePtr(time.Now()),
 	}
+}
+
+// timePtr returns a pointer to the given time
+func timePtr(t time.Time) *time.Time {
+	return &t
 }
 
 // AssertNoError is a helper to fail tests on unexpected errors

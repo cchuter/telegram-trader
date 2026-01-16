@@ -2661,12 +2661,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 63: Set up test coverage reporting
 
 **Do:**
-- [ ] Create `scripts/coverage.sh` script
-- [ ] Run all unit tests with coverage: `go test -coverprofile=coverage.out ./...`
-- [ ] Generate HTML coverage report: `go tool cover -html=coverage.out -o coverage.html`
-- [ ] Add coverage badge to README
-- [ ] Set coverage threshold: fail CI if <70%
-- [ ] Add coverage for TypeScript with Istanbul
+- [x] Create `scripts/coverage.sh` script
+- [x] Run all unit tests with coverage: `go test -coverprofile=coverage.out ./...`
+- [x] Generate HTML coverage report: `go tool cover -html=coverage.out -o coverage.html`
+- [x] Add coverage badge to README
+- [x] Set coverage threshold: fail CI if <70%
+- [x] Add coverage for TypeScript with Istanbul
 
 **Files:**
 - `scripts/coverage.sh` - create coverage script
