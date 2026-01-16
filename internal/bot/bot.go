@@ -19,17 +19,18 @@ import (
 
 // Bot represents the Telegram bot instance
 type Bot struct {
-	token           string
-	bot             *bot.Bot
-	db              storage.Database
-	authMiddleware  *middleware.AuthMiddleware
-	rateLimiter     *middleware.RateLimiter
-	walletManager   *wallet.Manager
-	dexClient       dex.Client
-	galaClient      *galachain.Client
-	arbitrageEngine *arbitrage.Engine
-	logger          *logging.Logger
-	tradeLogger     *logging.TradeLogger
+	token             string
+	bot               *bot.Bot
+	db                storage.Database
+	authMiddleware    *middleware.AuthMiddleware
+	rateLimiter       *middleware.RateLimiter
+	walletManager     *wallet.Manager
+	dexClient         dex.Client
+	galaClient        *galachain.Client
+	arbitrageEngine   *arbitrage.Engine
+	arbitrageExecutor *arbitrage.Executor
+	logger            *logging.Logger
+	tradeLogger       *logging.TradeLogger
 }
 
 // New creates a new Bot instance
@@ -40,17 +41,20 @@ func New(token string, db storage.Database, adminUserIDs string, encryptionKey s
 		return nil, err
 	}
 
+	engine := arbitrage.NewEngine(dexClient, galaClient)
+
 	return &Bot{
-		token:           token,
-		db:              db,
-		authMiddleware:  middleware.NewAuthMiddleware(db, adminUserIDs),
-		rateLimiter:     middleware.NewRateLimiter(10, 1*time.Minute),
-		walletManager:   walletManager,
-		dexClient:       dexClient,
-		galaClient:      galaClient,
-		arbitrageEngine: arbitrage.NewEngine(dexClient, galaClient),
-		logger:          logger,
-		tradeLogger:     tradeLogger,
+		token:             token,
+		db:                db,
+		authMiddleware:    middleware.NewAuthMiddleware(db, adminUserIDs),
+		rateLimiter:       middleware.NewRateLimiter(10, 1*time.Minute),
+		walletManager:     walletManager,
+		dexClient:         dexClient,
+		galaClient:        galaClient,
+		arbitrageEngine:   engine,
+		arbitrageExecutor: arbitrage.NewExecutor(nil, nil, engine), // TODO: Pass actual clients in production
+		logger:            logger,
+		tradeLogger:       tradeLogger,
 	}, nil
 }
 
@@ -75,6 +79,10 @@ func (b *Bot) Start(ctx context.Context) error {
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/swap", bot.MatchTypePrefix, b.handleSwap)
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/price", bot.MatchTypeExact, b.handlePrice)
 	b.bot.RegisterHandler(bot.HandlerTypeMessageText, "/arbitrage", bot.MatchTypeExact, b.handleArbitrage)
+
+	// Register callback handlers
+	b.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, "swap_", bot.MatchTypePrefix, b.handleSwapCallback)
+	b.bot.RegisterHandler(bot.HandlerTypeCallbackQueryData, "arbitrage_", bot.MatchTypePrefix, b.handleArbitrageCallback)
 
 	b.logger.Info("Bot started successfully", nil)
 	log.Println("Bot started successfully")
@@ -290,4 +298,40 @@ func (b *Bot) handleArbitrage(ctx context.Context, botInstance *bot.Bot, update 
 
 	// Call the handler
 	handlers.HandleArbitrage(ctx, botInstance, update, b.arbitrageEngine, b.logger)
+}
+
+// handleSwapCallback handles callback queries from swap confirmation buttons
+func (b *Bot) handleSwapCallback(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Callback queries don't have Message, they have CallbackQuery
+	if update.CallbackQuery == nil {
+		return
+	}
+
+	// Apply rate limiting (use CallbackQuery.From instead of Message.From)
+	// For callbacks, we need to construct a temporary update for middleware
+	// For now, skip middleware for callbacks and implement direct handling
+
+	// Log callback execution
+	b.logger.LogCommand(ctx, update.CallbackQuery.From.ID, update.CallbackQuery.From.Username, "swap_callback", map[string]interface{}{
+		"callback_data": update.CallbackQuery.Data,
+	})
+
+	// Call the handler
+	handlers.HandleSwapCallback(ctx, botInstance, update, b.dexClient, b.walletManager, b.logger, b.tradeLogger)
+}
+
+// handleArbitrageCallback handles callback queries from arbitrage confirmation buttons
+func (b *Bot) handleArbitrageCallback(ctx context.Context, botInstance *bot.Bot, update *models.Update) {
+	// Callback queries don't have Message, they have CallbackQuery
+	if update.CallbackQuery == nil {
+		return
+	}
+
+	// Log callback execution
+	b.logger.LogCommand(ctx, update.CallbackQuery.From.ID, update.CallbackQuery.From.Username, "arbitrage_callback", map[string]interface{}{
+		"callback_data": update.CallbackQuery.Data,
+	})
+
+	// Call the handler
+	handlers.HandleArbitrageCallback(ctx, botInstance, update, b.arbitrageExecutor, b.arbitrageEngine, b.logger, b.tradeLogger)
 }

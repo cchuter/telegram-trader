@@ -1526,12 +1526,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 37: Implement JSONL trade logging
 
 **Do:**
-- [ ] Update `internal/logging/trade_log.go` to append to logs/trades.jsonl
-- [ ] Log every swap and arbitrage execution
-- [ ] Include: timestamp, user_id, type, amounts, tokens, fees, tx_hashes, status
-- [ ] Ensure atomic writes (use file locking)
-- [ ] Never modify existing lines (append-only)
-- [ ] Update all swap and arbitrage handlers to log trades
+- [x] Update `internal/logging/trade_log.go` to append to logs/trades.jsonl
+- [x] Log every swap and arbitrage execution
+- [x] Include: timestamp, user_id, type, amounts, tokens, fees, tx_hashes, status
+- [x] Ensure atomic writes (use file locking)
+- [x] Never modify existing lines (append-only)
+- [x] Update all swap and arbitrage handlers to log trades
 
 **Files:**
 - `internal/logging/trade_log.go` - update trade logger

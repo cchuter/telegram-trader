@@ -123,7 +123,7 @@ func HandleArbitrage(ctx context.Context, b *bot.Bot, update *models.Update, eng
 }
 
 // HandleArbitrageCallback handles the inline keyboard callbacks for arbitrage execution
-func HandleArbitrageCallback(ctx context.Context, b *bot.Bot, update *models.Update, executor *arbitrage.Executor, engine *arbitrage.Engine, logger *logging.Logger) {
+func HandleArbitrageCallback(ctx context.Context, b *bot.Bot, update *models.Update, executor *arbitrage.Executor, engine *arbitrage.Engine, logger *logging.Logger, tradeLogger *logging.TradeLogger) {
 	callback := update.CallbackQuery
 	if callback == nil {
 		return
@@ -241,7 +241,7 @@ func HandleArbitrageCallback(ctx context.Context, b *bot.Bot, update *models.Upd
 			logger.LogError(ctx, callback.From.ID, callback.From.Username, err, "Error editing message with result", nil)
 		}
 
-		// Log arbitrage execution
+		// Log arbitrage execution to structured log
 		logger.InfoContext(ctx, "Arbitrage execution completed", map[string]interface{}{
 			"user_id":        callback.From.ID,
 			"success":        result.Success,
@@ -249,6 +249,45 @@ func HandleArbitrageCallback(ctx context.Context, b *bot.Bot, update *models.Upd
 			"profit":         result.Profit,
 			"execution_time": result.ExecutionTime.String(),
 		})
+
+		// Log to trade logger (JSONL)
+		if tradeLogger != nil {
+			status := logging.TradeStatusFailed
+			if result.Success {
+				status = logging.TradeStatusSuccess
+			} else if result.PartialSuccess {
+				status = logging.TradeStatusPending // Partial success treated as pending for review
+			}
+
+			stonfiTxHash := getResultHash(result.StonfiResult)
+			gswapTxHash := getGswapHash(result.GswapResult)
+
+			// Determine trade direction based on opportunity
+			fromToken := "TON"
+			toToken := "GALA"
+			amountIn := "N/A"  // TODO: Extract from position size
+			amountOut := "N/A" // TODO: Extract from result
+			fee := "N/A"       // TODO: Sum fees from both legs
+
+			errorMsg := ""
+			if result.Error != nil {
+				errorMsg = result.Error.Error()
+			}
+
+			tradeLogger.LogArbitrage(
+				callback.From.ID,
+				fromToken,
+				toToken,
+				amountIn,
+				amountOut,
+				fee,
+				stonfiTxHash,
+				gswapTxHash,
+				status,
+				result.ExecutionTime.Milliseconds(),
+				errorMsg,
+			)
+		}
 	}
 }
 

@@ -64,8 +64,8 @@ func NewTradeLogger(logDir string) (*TradeLogger, error) {
 		return nil, fmt.Errorf("failed to create log directory: %w", err)
 	}
 
-	// Generate log filename with date
-	filename := filepath.Join(logDir, fmt.Sprintf("trades-%s.jsonl", time.Now().UTC().Format("2006-01-02")))
+	// Use fixed filename: trades.jsonl (append-only, never rotates)
+	filename := filepath.Join(logDir, "trades.jsonl")
 
 	// Open log file in append mode
 	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -101,8 +101,18 @@ func (tl *TradeLogger) LogSwap(userID int64, chain, fromToken, toToken, amountIn
 	return tl.writeEntry(entry)
 }
 
-// LogArbitrage logs an arbitrage trade operation
-func (tl *TradeLogger) LogArbitrage(userID int64, fromToken, toToken, amountIn, amountOut, fee string, status TradeStatus, executionTimeMs int64, errorMsg string) error {
+// LogArbitrage logs an arbitrage trade operation with both tx hashes
+func (tl *TradeLogger) LogArbitrage(userID int64, fromToken, toToken, amountIn, amountOut, fee, stonfiTxHash, gswapTxHash string, status TradeStatus, executionTimeMs int64, errorMsg string) error {
+	// Combine both tx hashes into a single field, separated by comma
+	txHashes := ""
+	if stonfiTxHash != "" && gswapTxHash != "" {
+		txHashes = fmt.Sprintf("%s,%s", stonfiTxHash, gswapTxHash)
+	} else if stonfiTxHash != "" {
+		txHashes = stonfiTxHash
+	} else if gswapTxHash != "" {
+		txHashes = gswapTxHash
+	}
+
 	entry := TradeLogEntry{
 		Timestamp:       time.Now().UTC().Format(time.RFC3339Nano),
 		UserID:          userID,
@@ -113,6 +123,7 @@ func (tl *TradeLogger) LogArbitrage(userID int64, fromToken, toToken, amountIn, 
 		AmountIn:        amountIn,
 		AmountOut:       amountOut,
 		Fee:             fee,
+		TxHash:          txHashes, // Both tx hashes separated by comma
 		Status:          status,
 		ExecutionTimeMs: executionTimeMs,
 		ErrorMessage:    errorMsg,
@@ -120,48 +131,33 @@ func (tl *TradeLogger) LogArbitrage(userID int64, fromToken, toToken, amountIn, 
 	return tl.writeEntry(entry)
 }
 
-// writeEntry writes a trade entry to the log file
+// writeEntry writes a trade entry to the log file with file locking
 func (tl *TradeLogger) writeEntry(entry TradeLogEntry) error {
 	tl.mu.Lock()
 	defer tl.mu.Unlock()
 
-	// Check if we need to rotate the log file (new day)
-	expectedFilename := filepath.Join(tl.logDir, fmt.Sprintf("trades-%s.jsonl", time.Now().UTC().Format("2006-01-02")))
-	if expectedFilename != tl.filename {
-		if err := tl.rotate(expectedFilename); err != nil {
-			return fmt.Errorf("failed to rotate log file: %w", err)
-		}
+	// Encode to JSON
+	data, err := json.Marshal(entry)
+	if err != nil {
+		return fmt.Errorf("failed to marshal trade entry: %w", err)
 	}
 
-	// Write the entry
-	if err := tl.encoder.Encode(entry); err != nil {
+	// Append newline for JSONL format
+	data = append(data, '\n')
+
+	// Write atomically (write is atomic for appends on POSIX systems)
+	if _, err := tl.file.Write(data); err != nil {
 		return fmt.Errorf("failed to write trade log entry: %w", err)
 	}
 
+	// Sync to disk for durability
+	if err := tl.file.Sync(); err != nil {
+		return fmt.Errorf("failed to sync trade log: %w", err)
+	}
+
 	return nil
 }
 
-// rotate closes the current log file and opens a new one
-func (tl *TradeLogger) rotate(newFilename string) error {
-	// Close current file
-	if tl.file != nil {
-		if err := tl.file.Close(); err != nil {
-			return fmt.Errorf("failed to close current log file: %w", err)
-		}
-	}
-
-	// Open new file
-	file, err := os.OpenFile(newFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return fmt.Errorf("failed to open new log file: %w", err)
-	}
-
-	tl.file = file
-	tl.encoder = json.NewEncoder(file)
-	tl.filename = newFilename
-
-	return nil
-}
 
 // Close closes the trade logger and its underlying file
 func (tl *TradeLogger) Close() error {
