@@ -2353,13 +2353,13 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 56: Add unit tests for TypeScript GalaChain service
 
 **Do:**
-- [ ] Set up Jest for TypeScript: `npm install --save-dev jest ts-jest @types/jest`
-- [ ] Create `galachain-service/src/**/__tests__/` directories
-- [ ] Add tests for GSwapClient (getPrice, executeSwap)
-- [ ] Add tests for gRPC handlers
-- [ ] Add tests for wallet manager
-- [ ] Mock gswap SDK responses
-- [ ] Aim for 70% coverage
+- [x] Set up Jest for TypeScript: `npm install --save-dev jest ts-jest @types/jest`
+- [x] Create `galachain-service/src/**/__tests__/` directories
+- [x] Add tests for GSwapClient (getPrice, executeSwap)
+- [x] Add tests for gRPC handlers
+- [x] Add tests for wallet manager
+- [x] Mock gswap SDK responses
+- [x] Aim for 70% coverage
 
 **Files:**
 - `galachain-service/src/**/__tests__/*.test.ts` - create TypeScript tests
