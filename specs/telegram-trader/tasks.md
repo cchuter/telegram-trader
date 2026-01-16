@@ -2916,12 +2916,12 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ### Task 69: Create CI pipeline with GitHub Actions
 
 **Do:**
-- [ ] Create `.github/workflows/ci.yml`
-- [ ] Add jobs: test-go, test-typescript, lint-go, lint-typescript
-- [ ] Run on: push to main, pull requests
-- [ ] Check test coverage (fail if <70%)
-- [ ] Upload coverage reports to Codecov
-- [ ] Add status badge to README
+- [x] Create `.github/workflows/ci.yml`
+- [x] Add jobs: test-go, test-typescript, lint-go, lint-typescript
+- [x] Run on: push to main, pull requests
+- [x] Check test coverage (fail if <70%)
+- [x] Upload coverage reports to Codecov
+- [x] Add status badge to README
 
 **Files:**
 - `.github/workflows/ci.yml` - create CI workflow
